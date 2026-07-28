@@ -1,0 +1,16 @@
+{
+  "input_unique": 52,
+  "accepted": 0,
+  "rejected": 52,
+  "acceptance_rate": 0.0,
+  "teacher_forced_final": true,
+  "min_perception_rounds": 2,
+  "local_verifier_enabled": true,
+  "rejection_reasons": {
+    "loop_error:reasoner_missing_thinking": 28,
+    "loop_error:output_format_error": 5,
+    "too_few_perception_rounds:1": 16,
+    "local_verifier_error": 16,
+    "loop_error:max_rounds_exceeded": 3
+  }
+}

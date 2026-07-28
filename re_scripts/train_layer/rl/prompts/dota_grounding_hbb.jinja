@@ -1,0 +1,8 @@
+{{ content | trim }}
+The image contains a remote-sensing scene. Identify the referred target and map any natural subtype to one canonical DOTA class.
+Return an axis-aligned bounding box normalized to [0,1000], ordered as x1 <= x2 and y1 <= y2.
+You MUST use exactly this structure:
+<think>
+Reason step-by-step about the target category, visual attributes, region and spatial anchors.
+</think>
+Answer: {"class_name": "canonical DOTA class", "bbox": [x1, y1, x2, y2]}

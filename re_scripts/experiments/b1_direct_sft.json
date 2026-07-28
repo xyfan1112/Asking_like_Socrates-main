@@ -1,0 +1,18 @@
+{
+  "training": {
+    "dataset_variant": "direct",
+    "loss_mode": "standard_causal_lm"
+  },
+  "trajectory": {
+    "enabled": false
+  },
+  "experiment": {
+    "name": "b1_direct_sft",
+    "control_group": true,
+    "code": "B1",
+    "name_zh": "Direct OBB SFT",
+    "type_zh": "主实验",
+    "description_zh": "只使用DOTA全量类别条件OBB直接监督",
+    "reference": null
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "data_conversion": {
+    "coordinate_target": "norm100_obb"
+  },
+  "experiment": {
+    "name": "a9_norm100_coordinates",
+    "ablation": "coordinate_representation",
+    "code": "A9",
+    "name_zh": "0到100坐标",
+    "type_zh": "消融",
+    "description_zh": "以B3为参照，将监督坐标改为0到100",
+    "reference": "B3"
+  }
+}

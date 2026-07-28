@@ -1,0 +1,16 @@
+{
+  "trajectory": {
+    "geometry_gate": {
+      "enabled": false
+    }
+  },
+  "experiment": {
+    "name": "a5_no_geometry_gate",
+    "ablation": "trajectory_filter",
+    "code": "A5",
+    "name_zh": "关闭几何门控",
+    "type_zh": "消融",
+    "description_zh": "以B3为参照，只使用LLM verifier",
+    "reference": "B3"
+  }
+}

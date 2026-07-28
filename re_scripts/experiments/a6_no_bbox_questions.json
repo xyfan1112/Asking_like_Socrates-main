@@ -1,0 +1,14 @@
+{
+  "trajectory": {
+    "prompt_profile": "no_bbox_questions_ablation"
+  },
+  "experiment": {
+    "name": "a6_no_bbox_questions",
+    "ablation": "bbox_questioning",
+    "code": "A6",
+    "name_zh": "不询问bbox子问题",
+    "type_zh": "消融",
+    "description_zh": "以B3为参照，取消粗框和角点子问题",
+    "reference": "B3"
+  }
+}

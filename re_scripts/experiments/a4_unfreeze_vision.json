@@ -1,0 +1,15 @@
+{
+  "training": {
+    "freeze_vision_tower": false,
+    "freeze_multi_modal_projector": false
+  },
+  "experiment": {
+    "name": "a4_unfreeze_vision",
+    "ablation": "vision_freeze",
+    "code": "A4",
+    "name_zh": "解冻视觉塔",
+    "type_zh": "消融",
+    "description_zh": "以B3为参照，训练视觉编码器",
+    "reference": "B3"
+  }
+}

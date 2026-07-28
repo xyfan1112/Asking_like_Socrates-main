@@ -1,0 +1,14 @@
+{
+  "data_conversion": {
+    "coordinate_target": "pixel_obb"
+  },
+  "experiment": {
+    "name": "a8_pixel_coordinates",
+    "ablation": "coordinate_representation",
+    "code": "A8",
+    "name_zh": "原图像素坐标",
+    "type_zh": "消融",
+    "description_zh": "以B3为参照，将监督坐标改为原图像素",
+    "reference": "B3"
+  }
+}

@@ -1,0 +1,982 @@
+{
+  "package": "re_scripts",
+  "version": "4.3.1",
+  "generated_at": "2026-07-20",
+  "file_count": 193,
+  "files": [
+    {
+      "path": "README_v4.3_中文.md",
+      "size_bytes": 541,
+      "sha256": "db550eb3889f534f21901e400f5363ec0682ec02ba7989c156925864cb5dabc4"
+    },
+    {
+      "path": "README_中文.md",
+      "size_bytes": 468,
+      "sha256": "5d8e012b3c37042e6b02c5ede013c2aa272b495a467703fbb916071128370eaf"
+    },
+    {
+      "path": "VERSION.json",
+      "size_bytes": 3624,
+      "sha256": "5c58dc6f3534a28b006547bc3319da5fae589d9fd1841ed098b8d2cb51be2cfa"
+    },
+    {
+      "path": "data_layer/01_audit_dota128.py",
+      "size_bytes": 7224,
+      "sha256": "31d6a97974f4088b8e23cb06f66e90e97f0255f0e4b02919ee68a1420614fecf"
+    },
+    {
+      "path": "data_layer/02_build_dota128_ref.py",
+      "size_bytes": 22695,
+      "sha256": "8f73bdf04e98320797cb728e46e5a7024e6ea370888a10153668e882cf99dc18"
+    },
+    {
+      "path": "data_layer/03_validate_dota128_ref.py",
+      "size_bytes": 10659,
+      "sha256": "9d71c107db04349f7df93e3affbef6818fb1d3ddf1b171c436afad2446c312d0"
+    },
+    {
+      "path": "data_layer/04_visualize_dota128_ref.py",
+      "size_bytes": 5433,
+      "sha256": "34e1b2980168b0262bb82bd2f821d0efcec1385629340f64ea8534a261ce07de"
+    },
+    {
+      "path": "data_layer/05_build_agent_inputs.py",
+      "size_bytes": 11146,
+      "sha256": "e9684fefee2ce9f28e4555b46dc0e816c69d5cb01ad4d8c7fcef6e7a88c15c57"
+    },
+    {
+      "path": "data_layer/05b_verify_data_outputs.py",
+      "size_bytes": 6590,
+      "sha256": "76f6bfe1e1c8d78117ca2ba3efb26c87b02829fc1455879e2a391886a17f150f"
+    },
+    {
+      "path": "data_layer/06_generate_trajectories.py",
+      "size_bytes": 11908,
+      "sha256": "f7b2f1811646efd1f97079e9677947262c0c647590e89c936715fbc9d730256c"
+    },
+    {
+      "path": "data_layer/07_filter_trajectories.py",
+      "size_bytes": 9303,
+      "sha256": "e0b75fe26753dd5872364c37b1c7547c028c546e59511c8a07c4b1791c1ec3f5"
+    },
+    {
+      "path": "data_layer/08_build_dota128_llamafactory.py",
+      "size_bytes": 2961,
+      "sha256": "a0aa9e0cd543ad80981c79598332857a0c9669c6364e3204093c16f669516ae5"
+    },
+    {
+      "path": "data_layer/README_数据层.md",
+      "size_bytes": 1055,
+      "sha256": "e454e5b4bcb062fa894e5a686ee09124d12dfdd65c80c159d0c77a47ccf4feb9"
+    },
+    {
+      "path": "data_layer/__pycache__/01_audit_dota128.cpython-313.pyc",
+      "size_bytes": 9808,
+      "sha256": "1a4d6a49163e22a398e2514b32bed7e2deb9b79727d8acb611fe3c9a0a058edd"
+    },
+    {
+      "path": "data_layer/__pycache__/02_build_dota128_ref.cpython-313.pyc",
+      "size_bytes": 26154,
+      "sha256": "63ee7e6719c3fbbc9388533be9459d097499bb64fdcd1663c773f58f5e091230"
+    },
+    {
+      "path": "data_layer/__pycache__/03_validate_dota128_ref.cpython-313.pyc",
+      "size_bytes": 17661,
+      "sha256": "c6450a511fd9bc772b5d6591c0edc5fd2ea8e2f0d9d7fb9405eaf6cef6908807"
+    },
+    {
+      "path": "data_layer/__pycache__/04_visualize_dota128_ref.cpython-313.pyc",
+      "size_bytes": 8728,
+      "sha256": "aa07c18d2377a2134a3d5bf4c03ccd4c94fdc83ca5783d45abbeea6770d5118b"
+    },
+    {
+      "path": "data_layer/__pycache__/05_build_agent_inputs.cpython-313.pyc",
+      "size_bytes": 13194,
+      "sha256": "936c899062c539230996fd2db5f8c6d307a177ccd359b382281b940d6dd55cab"
+    },
+    {
+      "path": "data_layer/__pycache__/05b_verify_data_outputs.cpython-313.pyc",
+      "size_bytes": 11172,
+      "sha256": "ccc7cdbbff0384c94fdb1973df602c1a9fa5f508a8e875ccd42a425370b85ce4"
+    },
+    {
+      "path": "data_layer/__pycache__/06_generate_trajectories.cpython-313.pyc",
+      "size_bytes": 15689,
+      "sha256": "50e51ca5f2c7086b5419eb1a8af67d6ea6d065406722b46d97196f00aed1c14d"
+    },
+    {
+      "path": "data_layer/__pycache__/07_filter_trajectories.cpython-313.pyc",
+      "size_bytes": 12293,
+      "sha256": "70e36e48e205e1e11469b990b2a18dfae528b1ae49b6bdefd8dc79899be1be9e"
+    },
+    {
+      "path": "data_layer/__pycache__/08_build_dota128_llamafactory.cpython-313.pyc",
+      "size_bytes": 5235,
+      "sha256": "2556e895c79bba42d7be5de1d1def160ae8aa9443d4c5a9dfeefabf4bd27b131"
+    },
+    {
+      "path": "data_layer/__pycache__/trajectory_gates.cpython-313.pyc",
+      "size_bytes": 18913,
+      "sha256": "d0186c9769fcef65cac9535b98c4d148ed85c252960d1a9fb4cac4359087eb33"
+    },
+    {
+      "path": "data_layer/agents/__pycache__/check_three_agents.cpython-313.pyc",
+      "size_bytes": 2546,
+      "sha256": "016533ff3e2aa51fc568b22e625a209eb28f8e035fcb519cc131c18be1c5c708"
+    },
+    {
+      "path": "data_layer/agents/check_three_agents.py",
+      "size_bytes": 971,
+      "sha256": "16612732d5cb1a7b8d047cfa6e8bf8d8c92d31bfe8fb98c10df3d31306340037"
+    },
+    {
+      "path": "data_layer/agents/start_three_agents.sh",
+      "size_bytes": 5324,
+      "sha256": "be1fae85cb9aafcf920ba5bbc06446c69ac31953aedf28948786dc27b487b4d3"
+    },
+    {
+      "path": "data_layer/agents/stop_three_agents.sh",
+      "size_bytes": 3116,
+      "sha256": "0f75217c85d1a9bfa12d0897b6c287f01b8d8be632443354fb35a60bfb343f56"
+    },
+    {
+      "path": "data_layer/official_socratic/00_manage_run_state.py",
+      "size_bytes": 7417,
+      "sha256": "2c5b418fa8fee6504a7c95b224d17f543111428a2b28b7f4a806dd4cc61e992c"
+    },
+    {
+      "path": "data_layer/official_socratic/00_reset_official_outputs.sh",
+      "size_bytes": 609,
+      "sha256": "1cafeee88640f9d8a00cf891524f95484708c68f3bb3be6bdd6ff696c6f06f57"
+    },
+    {
+      "path": "data_layer/official_socratic/01_build_official_parquet.py",
+      "size_bytes": 5080,
+      "sha256": "96ed44e1256c9046d859c7c296f42fbfba7d5035bac10bb3b7adb7893db2034a"
+    },
+    {
+      "path": "data_layer/official_socratic/02_run_official_generation.sh",
+      "size_bytes": 6169,
+      "sha256": "f3b6fadd7f2a22c5a5c136973cd5339a6be839d72c812f76798057322240b470"
+    },
+    {
+      "path": "data_layer/official_socratic/02b_audit_debug_generation.py",
+      "size_bytes": 5709,
+      "sha256": "31219b07d0a4b23b8e311c1d6652d6d109f1a0d20331b425d7413ab6d2b4718a"
+    },
+    {
+      "path": "data_layer/official_socratic/02c_audit_full_generation.py",
+      "size_bytes": 3674,
+      "sha256": "ef231991ef0c70cb7875af51ceee01db855882e6778700c4c1099c01c954369c"
+    },
+    {
+      "path": "data_layer/official_socratic/03_run_official_postproc.sh",
+      "size_bytes": 2742,
+      "sha256": "14b1b9d347fa80a9696b4caf6db5d935a79d8d272063a4285d5779a7912d76f4"
+    },
+    {
+      "path": "data_layer/official_socratic/03a_audit_official_raw.py",
+      "size_bytes": 6755,
+      "sha256": "fce28b3149f0da49eec8cf0c49f46629363b31961b9b9b5aa38fad2f48bfa8fc"
+    },
+    {
+      "path": "data_layer/official_socratic/04_convert_official_to_llamafactory.py",
+      "size_bytes": 10433,
+      "sha256": "d50dbaa06957c5519cde186d6235a51a10205ae72f870e59e51a786b1f7fbf55"
+    },
+    {
+      "path": "data_layer/official_socratic/__pycache__/00_manage_run_state.cpython-313.pyc",
+      "size_bytes": 10355,
+      "sha256": "6847cfa246890167a0c8bcb046837d08de02a6f7e9d70189a6222aec8e67e6ef"
+    },
+    {
+      "path": "data_layer/official_socratic/__pycache__/01_build_official_parquet.cpython-313.pyc",
+      "size_bytes": 7852,
+      "sha256": "a37c4c5115a62639e92688eceebf1630c7920da0cca72b8baf49fc6bc8946683"
+    },
+    {
+      "path": "data_layer/official_socratic/__pycache__/02b_audit_debug_generation.cpython-313.pyc",
+      "size_bytes": 10951,
+      "sha256": "20a83498c432928b4c6929ad602cdf703e78d4dd765ecc4c2805e5289e661284"
+    },
+    {
+      "path": "data_layer/official_socratic/__pycache__/02c_audit_full_generation.cpython-313.pyc",
+      "size_bytes": 6957,
+      "sha256": "1ac0b515d195de5316a120f936cbdd34ea16683c317e2eee993e9e80d4aaf985"
+    },
+    {
+      "path": "data_layer/official_socratic/__pycache__/03a_audit_official_raw.cpython-313.pyc",
+      "size_bytes": 9507,
+      "sha256": "1b65b6ca8765806a242158c58b708a2cd1d0c3c6f15a4dbe951af5b584a50e5b"
+    },
+    {
+      "path": "data_layer/official_socratic/__pycache__/04_convert_official_to_llamafactory.cpython-313.pyc",
+      "size_bytes": 13498,
+      "sha256": "a0a1da60bc4e9cf0ead9bab6744e90197a046f2b1485670415fd57409ef2d63b"
+    },
+    {
+      "path": "data_layer/official_socratic/local_api_adapter/__pycache__/utils.cpython-313.pyc",
+      "size_bytes": 21338,
+      "sha256": "631de0b30659aab0ed2b5eddd922f8586d75acd515b7fd59059e8bb9055f4da6"
+    },
+    {
+      "path": "data_layer/official_socratic/local_api_adapter/utils.py",
+      "size_bytes": 17838,
+      "sha256": "b643f9e8f1a7474aa26b78635f1864adee4235b8f3ff32f5d0cb03b7f3025992"
+    },
+    {
+      "path": "data_layer/prompts/__init__.py",
+      "size_bytes": 59,
+      "sha256": "52dddcc9ed09d18bfe496bb242593310f24f4ba082db223c38c3408adfd47c10"
+    },
+    {
+      "path": "data_layer/prompts/__pycache__/__init__.cpython-313.pyc",
+      "size_bytes": 264,
+      "sha256": "bd94b7a26b82c25b5c8f0e222c7527d4c8a5c1ca12706e986efeb8f276d5f171"
+    },
+    {
+      "path": "data_layer/prompts/__pycache__/profiles.cpython-313.pyc",
+      "size_bytes": 9806,
+      "sha256": "ec19949c1873384fee9eca3964847514f7bebd19862d0eb3defcf1bb94fd114c"
+    },
+    {
+      "path": "data_layer/prompts/profiles.py",
+      "size_bytes": 9338,
+      "sha256": "17b0db028413144c1af0f3a4f47a606eb823f8b8294ffecf6b644feb8780e144"
+    },
+    {
+      "path": "data_layer/trajectory_gates.py",
+      "size_bytes": 14010,
+      "sha256": "c1f7a6003ada6d84b5e86196fa04f3f237016d0240736c2e97051d63ed63d28e"
+    },
+    {
+      "path": "docs/LLaMA-Factory数据目录契约_v4.3.1.md",
+      "size_bytes": 572,
+      "sha256": "b6a68e520e9ebe9d553d8b1fbed6e73f894ef064931c8363cb741938481ff1fa"
+    },
+    {
+      "path": "docs/Qwen2.5与Qwen3环境说明.md",
+      "size_bytes": 384,
+      "sha256": "26beafcf76b9f374079cc6cd02cf1873b811702e87903a94b705b9f30699642d"
+    },
+    {
+      "path": "docs/README.md",
+      "size_bytes": 545,
+      "sha256": "e41176a02617187b39579952a7ef1ba4c76535fa0f88b6367d7f771803734043"
+    },
+    {
+      "path": "docs/legacy_evidence/__pycache__/old_local_utils.cpython-313.pyc",
+      "size_bytes": 7572,
+      "sha256": "f54d69527cab1f9e2e3de901ee1925969b2790dcbe9397ca8a1c73f890fc9285"
+    },
+    {
+      "path": "docs/legacy_evidence/old_03_start_local_agents_dual.sh",
+      "size_bytes": 2220,
+      "sha256": "7b7d568c301b40071eb63bf621319fe12663218b797868021932c74aa323b66c"
+    },
+    {
+      "path": "docs/legacy_evidence/old_local_utils.py",
+      "size_bytes": 5618,
+      "sha256": "d2b5ed1ef8b6bf6f71eedd6b7aa92b10cd9a459c4daa308706e755bc4b2a7ce6"
+    },
+    {
+      "path": "docs/legacy_evidence/old_settings.json",
+      "size_bytes": 1670,
+      "sha256": "9ce5d817550ef506b145c3861ba01b57b09c95e2772b10609532e86ecc40d708"
+    },
+    {
+      "path": "docs/legacy_evidence/rejected_trajectory_audit.json",
+      "size_bytes": 40089,
+      "sha256": "f76a20c1da096b57b820980d83e2c2b05675646056f605a8ae8f2cf638e7c5ff"
+    },
+    {
+      "path": "docs/legacy_evidence/trajectory_quality_report.json",
+      "size_bytes": 411,
+      "sha256": "18e23d5c67816008e08e6d3f00db3521376dc54fa59f06646c5166f5b2eb7802"
+    },
+    {
+      "path": "docs/从零运行_B1_Direct_v4.3.1.md",
+      "size_bytes": 6230,
+      "sha256": "a992b71bd4e5333899153f5151d005fb579f32df46ae66d399d332ad998e8bec"
+    },
+    {
+      "path": "docs/强化学习接口说明.md",
+      "size_bytes": 389,
+      "sha256": "cfe7de8440d7554b21ca551972292f9fa0a865da2e90759a08c40f99f158df68"
+    },
+    {
+      "path": "docs/当前全量产物审计_20260720.md",
+      "size_bytes": 2192,
+      "sha256": "b97fb8b961ef00906bcdb5e25b1442a73e15e64f900a2330f44a93731668f1b0"
+    },
+    {
+      "path": "docs/运行手册_Direct与Socratic_v4.3.md",
+      "size_bytes": 5997,
+      "sha256": "85e6621d6b563ef2e949ff4235038ec306531d8ac12ac3439a4f4cf951384afc"
+    },
+    {
+      "path": "experiments/README_实验命名.md",
+      "size_bytes": 625,
+      "sha256": "69c365c87423698995be6c7de4699e606bb61be53a7493f59ad89830d320ba82"
+    },
+    {
+      "path": "experiments/a1_single_glance.json",
+      "size_bytes": 392,
+      "sha256": "82fd6591b7f87c3b3041216a30d06d53911683367e1cf36e414333c1cd244c07"
+    },
+    {
+      "path": "experiments/a2_no_teacher_force.json",
+      "size_bytes": 331,
+      "sha256": "0bc4d155ad7ab1b477341ef0b68de3e013432a1ecf097301acd86824bf76664b"
+    },
+    {
+      "path": "experiments/a3_no_dota_alias.json",
+      "size_bytes": 421,
+      "sha256": "35309bde88e1f7b35ac917a590042f54915331c991093f3f536372a4a062086b"
+    },
+    {
+      "path": "experiments/a4_unfreeze_vision.json",
+      "size_bytes": 353,
+      "sha256": "39d1cb32ed9c8e46a71f786a1de2123a7f8f7c22a300839df3d8921128dbfdee"
+    },
+    {
+      "path": "experiments/a5_no_geometry_gate.json",
+      "size_bytes": 339,
+      "sha256": "781f964f2d74f7abb116096aa9cd6a3d611962e7e23b995f556803e8c843102a"
+    },
+    {
+      "path": "experiments/a6_no_bbox_questions.json",
+      "size_bytes": 351,
+      "sha256": "0c5c1001ac09bac5f0cc682b4849fe8d3631a9b1ec86068ad3b5a4c24bb063d0"
+    },
+    {
+      "path": "experiments/a7_grounding_only.json",
+      "size_bytes": 411,
+      "sha256": "196e46275987b4c9f2a5b23239653edc5186aeedf4843c712c6f93c5c54e841f"
+    },
+    {
+      "path": "experiments/a8_pixel_coordinates.json",
+      "size_bytes": 350,
+      "sha256": "cb6a3b58c0e2f968e0754b227488c20cb3dbc67c2bfbedb28502c51b10aa12a5"
+    },
+    {
+      "path": "experiments/a9_norm100_coordinates.json",
+      "size_bytes": 344,
+      "sha256": "98d4398b4f7e9efa4d8508856b6600419b5a91dcbbb08420536ca3fd2259af1e"
+    },
+    {
+      "path": "experiments/b00_rseot_zero_shot.json",
+      "size_bytes": 336,
+      "sha256": "c6c6218989d6d9c679cba9cf8fb4b61f5ad7a2a6f24330b55016ac5e29d20c28"
+    },
+    {
+      "path": "experiments/b0_qwen25_zero_shot.json",
+      "size_bytes": 335,
+      "sha256": "8dadd545929c80d693528dd02b2131cfbb69b02d936b4038a163c6b09f5d0aa7"
+    },
+    {
+      "path": "experiments/b1_direct_sft.json",
+      "size_bytes": 391,
+      "sha256": "169c8b6535e422277f6730ef1a365da5b57613dfcdb5dab8d521d3d08c1e7be9"
+    },
+    {
+      "path": "experiments/b2_socratic_official_general.json",
+      "size_bytes": 453,
+      "sha256": "429c29a75667d03ba7b0617e0cd144512298149000ff8ab2a7c1119c79c7f014"
+    },
+    {
+      "path": "experiments/b3_socratic_obb_v1.json",
+      "size_bytes": 513,
+      "sha256": "644fdd1e1023ed4d54e6ddd0324638ff3557461c190b61f8d2565f654aa4a5f8"
+    },
+    {
+      "path": "experiments/rl1_grounding_hbb.json",
+      "size_bytes": 419,
+      "sha256": "f9d43e826b57db3137d097df57b7dce8639c58571046cf2ac1ae0f66503cfc96"
+    },
+    {
+      "path": "experiments/rl2_grounding_obb.json",
+      "size_bytes": 452,
+      "sha256": "f4090e7bc44b0320b7a88c37ac639c3331eb3da6a39e6aee318396a3c5f0c739"
+    },
+    {
+      "path": "main_layer/00_preflight.py",
+      "size_bytes": 1578,
+      "sha256": "aa87bbf00e4b4e22acf0cef920aa78e2a842dd5423664d743b716e5ac863119b"
+    },
+    {
+      "path": "main_layer/README_主控层.md",
+      "size_bytes": 524,
+      "sha256": "d871f2d671813e386e38afcf9aef7d599e8a639bad26d602ac480cd97dfb40d2"
+    },
+    {
+      "path": "main_layer/__pycache__/00_preflight.cpython-313.pyc",
+      "size_bytes": 3233,
+      "sha256": "244e0ae5fc5f5c5a5f6fbb21843caa2752948f03b5584b03594365a4412044af"
+    },
+    {
+      "path": "main_layer/__pycache__/common.cpython-313.pyc",
+      "size_bytes": 38724,
+      "sha256": "56fb47926da90de988821a2fcabdb340d17f00f41379bf2c79d8494540b1141e"
+    },
+    {
+      "path": "main_layer/__pycache__/config.cpython-313.pyc",
+      "size_bytes": 8669,
+      "sha256": "953ccdfb99d9289f0954f8b9e09f5bdd5322f7ab1b726e8c3bc2c0eb910a7092"
+    },
+    {
+      "path": "main_layer/__pycache__/migrate_settings_v4_to_v4_1.cpython-313.pyc",
+      "size_bytes": 2289,
+      "sha256": "ecf5e51370a5fbfd7a30375b64348669dbe2382fa67cb45c8a74b34574036c53"
+    },
+    {
+      "path": "main_layer/__pycache__/resolve_runtime.cpython-313.pyc",
+      "size_bytes": 2275,
+      "sha256": "507b89652654d3b020e67256bac253b38bb99a01354d82361f3c09702f73eb11"
+    },
+    {
+      "path": "main_layer/__pycache__/run.cpython-313.pyc",
+      "size_bytes": 8373,
+      "sha256": "57b2df1f7954d053639ad58ea868e0dd3fb99427c3b81a0903f921c29c58a0ea"
+    },
+    {
+      "path": "main_layer/__pycache__/runtime.cpython-313.pyc",
+      "size_bytes": 8993,
+      "sha256": "b73b4b79d233c181a1b37a0724c6a3495b8fea158cc8da2c70270b9de4d47a00"
+    },
+    {
+      "path": "main_layer/common.py",
+      "size_bytes": 21714,
+      "sha256": "e8a368259a965fa05743bcce9f3784ef33105d657302538d0e4b1797c69be5f2"
+    },
+    {
+      "path": "main_layer/config.py",
+      "size_bytes": 5564,
+      "sha256": "30e38ab818940655180b198004d33cd844d67fe5d4359bf0955d33637f9b29c5"
+    },
+    {
+      "path": "main_layer/migrate_settings_v4_to_v4_1.py",
+      "size_bytes": 1283,
+      "sha256": "49e776492352589e88964d6f6f7e901399d8a2829455a66a6341b6ce77618106"
+    },
+    {
+      "path": "main_layer/resolve_runtime.py",
+      "size_bytes": 1189,
+      "sha256": "bd561af058c55efb76c8d3a513ba8a5db332c540edffe55cfa6eb9aa8cb70254"
+    },
+    {
+      "path": "main_layer/run.py",
+      "size_bytes": 6093,
+      "sha256": "0cc7d0ad024bf9b2804db1426aaeed91f20eca2742137b3dbc9731683a8edbd2"
+    },
+    {
+      "path": "main_layer/run_b1_from_scratch.sh",
+      "size_bytes": 3339,
+      "sha256": "e9557c775c1e13edefd532574631a447bb846f49ac99c7895ef80012a38e7df3"
+    },
+    {
+      "path": "main_layer/run_data_full.sh",
+      "size_bytes": 3293,
+      "sha256": "40e0fabeb221f16d20bd5ae46f6d571fb8c7de4c4b3f5ce78e0825da320b8b21"
+    },
+    {
+      "path": "main_layer/run_official_socratic_full.sh",
+      "size_bytes": 1755,
+      "sha256": "f8ab300b32439ba343c48353a61b3ef1bd6bcc227f2c72879147baa74bf871a3"
+    },
+    {
+      "path": "main_layer/run_test_matrix.sh",
+      "size_bytes": 543,
+      "sha256": "1f774c68db956d478a8044ce9e23aa916b141cf39b4f0cad1b14202acdc15b65"
+    },
+    {
+      "path": "main_layer/run_training_prepare.sh",
+      "size_bytes": 980,
+      "sha256": "1950eaaf15a9745ed0b061465783364b9fbd1cd8ef68e73dbc0b04bcdabb3540"
+    },
+    {
+      "path": "main_layer/runtime.py",
+      "size_bytes": 6420,
+      "sha256": "1cdcc3e9a8ad7fffe40b65e5e1677026c5c9625cdb3b397e3abba580f142ed1d"
+    },
+    {
+      "path": "settings.example.json",
+      "size_bytes": 14428,
+      "sha256": "c2c7bcafa4a8f83dbc2c381ccb9200865aa73b313e663266212eab31a5af76ae"
+    },
+    {
+      "path": "settings.json",
+      "size_bytes": 14428,
+      "sha256": "c2c7bcafa4a8f83dbc2c381ccb9200865aa73b313e663266212eab31a5af76ae"
+    },
+    {
+      "path": "test_layer/01_raw_dota_obb_infer.py",
+      "size_bytes": 6592,
+      "sha256": "333dd74a89ba1a34953e726b4ec871b34acd0eb7f2c3c20685009989eb1e0e08"
+    },
+    {
+      "path": "test_layer/02_raw_dota_obb_metrics.py",
+      "size_bytes": 4351,
+      "sha256": "d13494546a61c2c0d2888de658e651870aa7af488f11ec6092b2020553b91127"
+    },
+    {
+      "path": "test_layer/03_ref_grounding_infer.py",
+      "size_bytes": 8162,
+      "sha256": "43451f3541880cdb6b4a756e3c41cd02f42ac19c2e5f2fe57ea56aa18d73e785"
+    },
+    {
+      "path": "test_layer/04_ref_grounding_metrics_k.py",
+      "size_bytes": 3921,
+      "sha256": "1026780db57b86faa4cbc4a80e3c71ab9a68e3df5a638d52c4a23a257329b170"
+    },
+    {
+      "path": "test_layer/05_rseot4k_infer.py",
+      "size_bytes": 2030,
+      "sha256": "5cb7526e268cea076944707726dffba9671449404422563100491570595de622"
+    },
+    {
+      "path": "test_layer/05_sharegpt_dataset_infer.py",
+      "size_bytes": 6339,
+      "sha256": "5849a2722f54f25acaa8809eb9aef03c72967b45d2f637dc732cc9b2af4c5b41"
+    },
+    {
+      "path": "test_layer/06_vqa_metrics_k.py",
+      "size_bytes": 2721,
+      "sha256": "45d12c1759e83f6bf9941f321e32704b76b472ef17872c5ff9b3cab73b80ac3d"
+    },
+    {
+      "path": "test_layer/07_score_existing_vrsbench.py",
+      "size_bytes": 1076,
+      "sha256": "698a572e9fa0544f7975cad3742845db6341029a036b81c9bd5be1975df8aaba"
+    },
+    {
+      "path": "test_layer/07a_check_vrsbench_k_runs.py",
+      "size_bytes": 1312,
+      "sha256": "98ee14542da59b85e47fdc945709705c67667aa28373edd3cca0e5cfca05e843"
+    },
+    {
+      "path": "test_layer/08_diagnose_map_zero.py",
+      "size_bytes": 2932,
+      "sha256": "77a8df12f8fa5fe8443ce3932b1d534ac20ef749ce56cab81f149a4a28a09a30"
+    },
+    {
+      "path": "test_layer/09_visualize_predictions.py",
+      "size_bytes": 1815,
+      "sha256": "f697c3d5325cedf7d86bd2ea77fc0a74bc7b2a2c3699c7e54687c7a74e21c2b0"
+    },
+    {
+      "path": "test_layer/README_测试层.md",
+      "size_bytes": 583,
+      "sha256": "f0bbcd5da163f39a54cab99dae9ea10530243983dc054a254c71bc623835bc5b"
+    },
+    {
+      "path": "test_layer/__pycache__/01_raw_dota_obb_infer.cpython-313.pyc",
+      "size_bytes": 9739,
+      "sha256": "ad8dc5ffd24559ca0b36c61dc70aaa6aff489b711928ac6c46d82dcacbab429e"
+    },
+    {
+      "path": "test_layer/__pycache__/02_raw_dota_obb_metrics.cpython-313.pyc",
+      "size_bytes": 8802,
+      "sha256": "2b954f16d7f13a8960c49a6aaba7510b338fe05c73fe64d158d07ad0fec18036"
+    },
+    {
+      "path": "test_layer/__pycache__/03_ref_grounding_infer.cpython-313.pyc",
+      "size_bytes": 11977,
+      "sha256": "7afd4659062dac830f297c126fc8b3853e2f776aa7e8fce5a38682400882ba3e"
+    },
+    {
+      "path": "test_layer/__pycache__/04_ref_grounding_metrics_k.cpython-313.pyc",
+      "size_bytes": 8602,
+      "sha256": "43f95607a880fe6cbbf50f7b7ea3836d433c26f21af8ccab6f4242c03ac50546"
+    },
+    {
+      "path": "test_layer/__pycache__/05_rseot4k_infer.cpython-313.pyc",
+      "size_bytes": 3237,
+      "sha256": "a7f355c5ba080827425cd943f9e171a61a09fa536aa3a17277ca7a9df95e0915"
+    },
+    {
+      "path": "test_layer/__pycache__/05_sharegpt_dataset_infer.cpython-313.pyc",
+      "size_bytes": 10625,
+      "sha256": "6166fb30f1cb11400761c64ce03e91d11c6b9e2f5cc08793c81b2447d037cfd8"
+    },
+    {
+      "path": "test_layer/__pycache__/06_vqa_metrics_k.cpython-313.pyc",
+      "size_bytes": 8795,
+      "sha256": "c835a465541ea1cbbba6d6824092b4a98e422d632ca020801b84404637e4387b"
+    },
+    {
+      "path": "test_layer/__pycache__/07_score_existing_vrsbench.cpython-313.pyc",
+      "size_bytes": 2221,
+      "sha256": "3f229c39c8597f76eea92a5d90bdfe5549ce9014028c0c7177ff4b782ddd0109"
+    },
+    {
+      "path": "test_layer/__pycache__/07a_check_vrsbench_k_runs.cpython-313.pyc",
+      "size_bytes": 2993,
+      "sha256": "5dc4d065dfb1c03d515f596cd766eaf8575a1d2e647abe81b8b5259dbf055f6b"
+    },
+    {
+      "path": "test_layer/__pycache__/08_diagnose_map_zero.cpython-313.pyc",
+      "size_bytes": 6094,
+      "sha256": "708dd962786a1c1ad78d4a190f717a4b1960786e4267b36cd8ffbd4210cb02e5"
+    },
+    {
+      "path": "test_layer/__pycache__/09_visualize_predictions.cpython-313.pyc",
+      "size_bytes": 4927,
+      "sha256": "f0adc1eca8ff9fe08578d8d1da3a07437ec3f3a383aa0c0c7efc4670bac21e6d"
+    },
+    {
+      "path": "test_layer/__pycache__/eval_common.cpython-313.pyc",
+      "size_bytes": 4333,
+      "sha256": "1c281525abd3d14e005dd1ef11b0a6a0d81a521ef9d1347509b105a87c5f2911"
+    },
+    {
+      "path": "test_layer/eval_common.py",
+      "size_bytes": 2640,
+      "sha256": "c1bdc85af2ba6f8d8b0f8a516f1fb4a9e033962282e936063477fd39a1c4b4c4"
+    },
+    {
+      "path": "test_layer/interactive/__pycache__/gradio_grounding_app.cpython-313.pyc",
+      "size_bytes": 5878,
+      "sha256": "dadab69553bb123145491b850aa7a64676ba32a288a7e33aefe27334c71a89fa"
+    },
+    {
+      "path": "test_layer/interactive/__pycache__/single_image_grounding.cpython-313.pyc",
+      "size_bytes": 6313,
+      "sha256": "6a541bf27777ac1265ed5505cb51d1f88cdc34916ce3c5dd09bf9e095bfc1594"
+    },
+    {
+      "path": "test_layer/interactive/gradio_grounding_app.py",
+      "size_bytes": 2623,
+      "sha256": "6d4ebc324bb43cef9d9787ee3355452b63254de971d5d6b55ec646552ed58fda"
+    },
+    {
+      "path": "test_layer/interactive/single_image_grounding.py",
+      "size_bytes": 2730,
+      "sha256": "b016f86e664ea2edd384f1f58832ca9195f1e4a889aa3fdff5f4aee3ec6a5c70"
+    },
+    {
+      "path": "test_layer/legacy_dota8/07_dota8_batch_obb.py",
+      "size_bytes": 29910,
+      "sha256": "76c41d381804b58d0e1a530c117e3925a2a44f21d7c27300404d84f40c309073"
+    },
+    {
+      "path": "test_layer/legacy_dota8/08_eval_dota8_obb.py",
+      "size_bytes": 21991,
+      "sha256": "849a9a0e058ffed80970f4fc12c8ba9473dfee2569a62db6a191eed2db7f7fec"
+    },
+    {
+      "path": "test_layer/legacy_dota8/__pycache__/07_dota8_batch_obb.cpython-313.pyc",
+      "size_bytes": 33973,
+      "sha256": "faa6e6de4e0506a847cf1e7c943a64aaf36154e80b5c90285f18a279f925cbac"
+    },
+    {
+      "path": "test_layer/legacy_dota8/__pycache__/08_eval_dota8_obb.cpython-313.pyc",
+      "size_bytes": 23432,
+      "sha256": "b73c653bb635ff576e82f039c2953d9c64847af6dd9cd8cda9f1f82e4f0fbfa4"
+    },
+    {
+      "path": "test_layer/legacy_dota8/run_dota8_obb.sh",
+      "size_bytes": 936,
+      "sha256": "a0561b2af4b4e218d91f6c4bc4071f96dbf1f3b1d3688434435886dec1103d7a"
+    },
+    {
+      "path": "test_layer/legacy_vrsbench/01_check_vrsbench.py",
+      "size_bytes": 5758,
+      "sha256": "70fb28a1de5c45c710933284e53f13a1aadecd7e8203a2d128792c34ba4e28dc"
+    },
+    {
+      "path": "test_layer/legacy_vrsbench/02_infer_vrsbench.py",
+      "size_bytes": 13192,
+      "sha256": "b1551dee63fec1a1aed10fe40c6f8627f56f2f5e196c4780dcc9499ccc640df3"
+    },
+    {
+      "path": "test_layer/legacy_vrsbench/03_score_local.py",
+      "size_bytes": 7416,
+      "sha256": "429dc83129151c49761dca33ac08e2ccd7ad853bedd5845c54f73183fc2eeb4c"
+    },
+    {
+      "path": "test_layer/legacy_vrsbench/04_infer_vllm.py",
+      "size_bytes": 11929,
+      "sha256": "bc0271cdd22ee30fdabad421edd34853d99316c071f0a69f8a4438a40651e5bf"
+    },
+    {
+      "path": "test_layer/legacy_vrsbench/__pycache__/01_check_vrsbench.cpython-313.pyc",
+      "size_bytes": 9331,
+      "sha256": "7dfd83307f9ba07f9c0503ffebb784dbec197cbbcaeb9d8b2db878194961be87"
+    },
+    {
+      "path": "test_layer/legacy_vrsbench/__pycache__/02_infer_vrsbench.cpython-313.pyc",
+      "size_bytes": 17589,
+      "sha256": "a1e1dc4c90fc11e7a42c968bb344915935ecbca1afe2e1b0bd5b1da463b141ac"
+    },
+    {
+      "path": "test_layer/legacy_vrsbench/__pycache__/03_score_local.cpython-313.pyc",
+      "size_bytes": 12339,
+      "sha256": "d5a490a9f7d4d890090e3d65c8d6945adf4ec69abee6d19792b9d6574f8cb999"
+    },
+    {
+      "path": "test_layer/legacy_vrsbench/__pycache__/04_infer_vllm.cpython-313.pyc",
+      "size_bytes": 15879,
+      "sha256": "9b5a89dd9feb5a2015d73e833fe0bbc8da85bee1b9328f25a6e7164ffd5cdb11"
+    },
+    {
+      "path": "test_layer/legacy_vrsbench/run_examples.sh",
+      "size_bytes": 1098,
+      "sha256": "161f91670257975bf523d77c458e60da0bf0c8ee3c8e710e190885beac71c600"
+    },
+    {
+      "path": "test_layer/protocols/run_dota_detection.sh",
+      "size_bytes": 969,
+      "sha256": "cd22fa221b45fa7e6a71a2e733c31993b7e910c8411cbd09867e8f35dd976008"
+    },
+    {
+      "path": "test_layer/protocols/run_ref_grounding.sh",
+      "size_bytes": 1195,
+      "sha256": "c2a6522d0b4aa8a96c021ad357691aeb5d3b9b6317548a9d2b6f5a70ebabccfd"
+    },
+    {
+      "path": "test_layer/protocols/run_vrsbench_existing.sh",
+      "size_bytes": 708,
+      "sha256": "1c407c5481e656c4ed41498cd49c597dc93f40979992130fd5966f9e6c03e76b"
+    },
+    {
+      "path": "test_layer/start_eval_model.sh",
+      "size_bytes": 3857,
+      "sha256": "63a87dd78b5b0973ec77a8c9fd1ec40e9a8aa82bbead85280797fdc2a7df8be2"
+    },
+    {
+      "path": "test_layer/stop_eval_model.sh",
+      "size_bytes": 438,
+      "sha256": "043fef2a65ac5b39cf6a5b920b9f5db46f4edc84aee4f873855105b448965043"
+    },
+    {
+      "path": "tests/__pycache__/smoke_test.cpython-313.pyc",
+      "size_bytes": 4243,
+      "sha256": "71f661e0348809a9b3dc01f9fa5e75b978761307dbffa90888fba3924bcaa17d"
+    },
+    {
+      "path": "tests/__pycache__/test_v4_contracts.cpython-313.pyc",
+      "size_bytes": 11032,
+      "sha256": "3228cb59e43b7ab41a286dcdcf68a5573a77d539f47464bf333b8688d705dd61"
+    },
+    {
+      "path": "tests/run_smoke_test.sh",
+      "size_bytes": 209,
+      "sha256": "c71132e73064e27e5e70f54fc3d9aae32cfa28b64734aa11691b7c3cbb4d902c"
+    },
+    {
+      "path": "tests/smoke_test.py",
+      "size_bytes": 2915,
+      "sha256": "305d3d4fb17b611cdea1e3b28de030be7f9d313e9bd2dcd28d69df5bab5d92a7"
+    },
+    {
+      "path": "tests/test_v4_contracts.py",
+      "size_bytes": 6619,
+      "sha256": "3052430f806623d27542c1aa5e1dd809beaf742f9bba00c97e23cad9d0a967ee"
+    },
+    {
+      "path": "tools/__pycache__/audit_socratic_artifacts.cpython-313.pyc",
+      "size_bytes": 12753,
+      "sha256": "7bef48c1bce2c5cad30c12de4dc3d374d8172c9c6311081cc2d3846af3ed8b7a"
+    },
+    {
+      "path": "tools/__pycache__/check_v422_install.cpython-313.pyc",
+      "size_bytes": 4353,
+      "sha256": "cedec4915a9198e5c1cd7efe0c068c1a6707cb4fca83bdea2f481d31f6db8a86"
+    },
+    {
+      "path": "tools/__pycache__/migrate_settings_to_v43.cpython-313.pyc",
+      "size_bytes": 4487,
+      "sha256": "12c0a327a0719a969a1d7740da8bfd00243166c07143b4651e8136c540a39f29"
+    },
+    {
+      "path": "tools/__pycache__/migrate_settings_to_v431.cpython-313.pyc",
+      "size_bytes": 2149,
+      "sha256": "f081cc39bb5afa7c077f1dbf9893ec4151d474db5d5ec0cf2fde9194ab01bc84"
+    },
+    {
+      "path": "tools/__pycache__/tune_v422_settings.cpython-313.pyc",
+      "size_bytes": 4004,
+      "sha256": "87a4b7fd05e6501f895459558175f5378430015469fcede3fa33c9cf1a6b1bd2"
+    },
+    {
+      "path": "tools/audit_socratic_artifacts.py",
+      "size_bytes": 8245,
+      "sha256": "d0f4adb20b9c30ed3758b67b6ae41f7b3230dc94f1505ab70297fff195dd389d"
+    },
+    {
+      "path": "tools/check_v422_install.py",
+      "size_bytes": 2748,
+      "sha256": "f99f7690df665706233e12697a2dc3a6250bcee247a0cae9f41c060c146ae7cf"
+    },
+    {
+      "path": "tools/migrate_settings_to_v43.py",
+      "size_bytes": 2699,
+      "sha256": "451ca77d3b7e7e2b0653ea6bedb9ba1fadcc9a560a870d3d27029297fe576263"
+    },
+    {
+      "path": "tools/migrate_settings_to_v431.py",
+      "size_bytes": 1041,
+      "sha256": "ca67e1a4bd7767a748dbe1c215bb154c52355cb963e0a44f20a2f1e0fe90a67e"
+    },
+    {
+      "path": "tools/tune_v422_settings.py",
+      "size_bytes": 2622,
+      "sha256": "1c5e148152e91243c11aab875330fa79c337996801e21bc5681651d362b3d6fb"
+    },
+    {
+      "path": "train_layer/00_prepare_direct_only.py",
+      "size_bytes": 5665,
+      "sha256": "32086f696a46b582625ac5d9b3b00f185036558224b0a4fc05ae59613da37fb3"
+    },
+    {
+      "path": "train_layer/01_validate_training_data.py",
+      "size_bytes": 4948,
+      "sha256": "014425ba8bb13e63c7dcf42662b7e3dac2f62c259d931826faf52033848329f7"
+    },
+    {
+      "path": "train_layer/02_generate_configs.py",
+      "size_bytes": 5388,
+      "sha256": "d975856cb8202cf8dbdb5e902eae941821f8a6061c5a51fb758334f286efd0cd"
+    },
+    {
+      "path": "train_layer/02a_validate_llamafactory_contract.py",
+      "size_bytes": 10068,
+      "sha256": "2dd6f010bd72938e46b6cc9d145392d2dc47e7327f726e4e44a225962668dd7b"
+    },
+    {
+      "path": "train_layer/02b_generate_official_llamafactory_configs.py",
+      "size_bytes": 4226,
+      "sha256": "d8c66ea6022bf208165b8e83761fcfb348fa265a3d727f7b1d5164761a63a6de"
+    },
+    {
+      "path": "train_layer/03_train_b1_direct.sh",
+      "size_bytes": 1189,
+      "sha256": "9c242ff41e2d8fbc0c3d4a6c02762e271901e1162596822f25e784aceeed65f0"
+    },
+    {
+      "path": "train_layer/03b_train_official_llamafactory.sh",
+      "size_bytes": 838,
+      "sha256": "26a03dff36a7992b0330a62c07c6a9af8b6ad613c7d9e69519ddb2fe1d097dac"
+    },
+    {
+      "path": "train_layer/04_train_b2_socratic.sh",
+      "size_bytes": 960,
+      "sha256": "c4f4be3d5381445164400466c009aef6aa6df929788fc18fabff20fc7103113d"
+    },
+    {
+      "path": "train_layer/05_export_merge.sh",
+      "size_bytes": 3215,
+      "sha256": "da0dff3f9f8a35e4bd6307331df31be3554e8ad6cac1349b7eb1fdd26e98cb7c"
+    },
+    {
+      "path": "train_layer/README_训练层.md",
+      "size_bytes": 1153,
+      "sha256": "04073bfedb07103e4b1269ccbeb47c1ef7e6f0cf1cb2579d988751a2b00009ab"
+    },
+    {
+      "path": "train_layer/__pycache__/00_prepare_direct_only.cpython-313.pyc",
+      "size_bytes": 7318,
+      "sha256": "4b525f565a27b948bc151766b2ec292f918bd62d1f07ea54ea3b0541f86c0246"
+    },
+    {
+      "path": "train_layer/__pycache__/01_validate_training_data.cpython-313.pyc",
+      "size_bytes": 7003,
+      "sha256": "a74d3dac5925154886b032047c580a1416e1b0ee5ae57cf1465c2d8f09a775df"
+    },
+    {
+      "path": "train_layer/__pycache__/02_generate_configs.cpython-313.pyc",
+      "size_bytes": 7556,
+      "sha256": "3b3080fb501f0e39960b3f47c2757da04b043a2b4e2cf9beaedfa1a86b20af21"
+    },
+    {
+      "path": "train_layer/__pycache__/02a_validate_llamafactory_contract.cpython-313.pyc",
+      "size_bytes": 14494,
+      "sha256": "cb89f72d2c970b791c7e0532651e5ab6c87a61c39743b37152a69233abe60104"
+    },
+    {
+      "path": "train_layer/__pycache__/02b_generate_official_llamafactory_configs.cpython-313.pyc",
+      "size_bytes": 5938,
+      "sha256": "8b0e1fba78735304a6f5d18f8850adfa194088bc08dd5f2933c1ca275596a413"
+    },
+    {
+      "path": "train_layer/_runtime.sh",
+      "size_bytes": 3972,
+      "sha256": "0459c200be46ca84ec1978c76e96aeb2c3b200d64c2eb26769cd86303bfc17ee"
+    },
+    {
+      "path": "train_layer/rl/00_preflight_rl.py",
+      "size_bytes": 2214,
+      "sha256": "38107892a621461167acb9584c5222af142a22b311e7ee3696f02a996fd6887e"
+    },
+    {
+      "path": "train_layer/rl/01_build_grounding_rl_data.py",
+      "size_bytes": 2448,
+      "sha256": "2e71e248404046054231e5508a1022611aae2f5af920485bedca0da753ca0c05"
+    },
+    {
+      "path": "train_layer/rl/02_generate_easy_r1_launch.py",
+      "size_bytes": 3841,
+      "sha256": "dd7073f7764798bd5aa463412b7dd8e1c9939925c213e39024afa2273682e989"
+    },
+    {
+      "path": "train_layer/rl/03_launch_stage1_grounding.sh",
+      "size_bytes": 944,
+      "sha256": "46433fea77f7e8af0d4e7ee65f119fc646e0824eff1250f4035b7501366727a9"
+    },
+    {
+      "path": "train_layer/rl/__pycache__/00_preflight_rl.cpython-313.pyc",
+      "size_bytes": 4904,
+      "sha256": "cf9441e3e64ac7a00d8c52105585905a4c48e5a8f423b71e11be736f6f30978a"
+    },
+    {
+      "path": "train_layer/rl/__pycache__/01_build_grounding_rl_data.cpython-313.pyc",
+      "size_bytes": 3850,
+      "sha256": "de803dd4f8c8789dc71835682091443c8147915a1bfe145ecd8e0e378fc41103"
+    },
+    {
+      "path": "train_layer/rl/__pycache__/02_generate_easy_r1_launch.cpython-313.pyc",
+      "size_bytes": 7209,
+      "sha256": "195604f0f2bd507feefa413818c5f546fc516d816de3f1312d6ef8d264809c84"
+    },
+    {
+      "path": "train_layer/rl/prompts/dota_grounding_hbb.jinja",
+      "size_bytes": 465,
+      "sha256": "b56d2e7e78156b6616e22cb5eb15256018f6c9aa98c4902f0e3d2742b1c12b19"
+    },
+    {
+      "path": "train_layer/rl/prompts/dota_grounding_obb_experimental.jinja",
+      "size_bytes": 461,
+      "sha256": "cd9fa0e4254339b6524435b16a1dee226704d3810c7ff60927062ab0d260ecbf"
+    },
+    {
+      "path": "train_layer/rl/rewards/__pycache__/dota_hbb_reward.cpython-313.pyc",
+      "size_bytes": 5058,
+      "sha256": "6ed66a79805d71e027b0f740da3305dbba6abc0fe3e807b2606b59d1103c18f3"
+    },
+    {
+      "path": "train_layer/rl/rewards/__pycache__/dota_obb_reward_experimental.cpython-313.pyc",
+      "size_bytes": 4298,
+      "sha256": "c24a53944ab2f32e0efca63e9e44c2cf80f97246074c26fa72a94701ddf290f1"
+    },
+    {
+      "path": "train_layer/rl/rewards/dota_hbb_reward.py",
+      "size_bytes": 2775,
+      "sha256": "2c8c2ddfea2221e620f07b4a9ebd0f7db2dcffd5cf31c07839a7220dfa7e2d02"
+    },
+    {
+      "path": "train_layer/rl/rewards/dota_obb_reward_experimental.py",
+      "size_bytes": 1887,
+      "sha256": "c53a63905d60eafd81dde4af0dca89dbf6b53e254793208f5bdd908e67ee13d0"
+    }
+  ],
+  "validation": {
+    "python_compileall": "pass",
+    "shell_bash_n": "pass",
+    "json_parse": "pass",
+    "v4_contracts": "pass",
+    "synthetic_smoke_test": "pass",
+    "llamafactory_dataset_contract_integration": "pass",
+    "settings_migration": "pass"
+  }
+}

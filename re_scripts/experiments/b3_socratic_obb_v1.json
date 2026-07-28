@@ -1,0 +1,20 @@
+{
+  "trajectory": {
+    "engine": "official_socratic_agent",
+    "prompt_profile": "obb_grounding_v1",
+    "teacher_force_final_answer": true,
+    "min_perception_rounds_strict": 2
+  },
+  "training": {
+    "dataset_variant": "mixed"
+  },
+  "experiment": {
+    "name": "b3_socratic_obb_v1",
+    "primary_method": true,
+    "code": "B3",
+    "name_zh": "OBB定向Socratic SFT",
+    "type_zh": "主实验",
+    "description_zh": "Direct OBB加类别/粗框/方向/角点分阶段轨迹",
+    "reference": null
+  }
+}

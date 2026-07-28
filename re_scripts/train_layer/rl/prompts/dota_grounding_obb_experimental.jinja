@@ -1,0 +1,8 @@
+{{ content | trim }}
+The image contains a remote-sensing scene. Identify the referred target and map any natural subtype to one canonical DOTA class.
+Return four rotated-box corners normalized to [0,1000] in stable clockwise order.
+You MUST use exactly this structure:
+<think>
+Reason step-by-step about category, target identity, region, orientation and boundary.
+</think>
+Answer: {"class_name": "canonical DOTA class", "obb": [x1, y1, x2, y2, x3, y3, x4, y4]}

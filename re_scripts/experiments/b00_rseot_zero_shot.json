@@ -1,0 +1,14 @@
+{
+  "models": {
+    "active_eval_model": "rs_eot"
+  },
+  "experiment": {
+    "name": "b00_rseot_zero_shot",
+    "description": "RS-EoT-7B zero-shot baseline",
+    "code": "B00",
+    "name_zh": "RS-EoT原模型零样本",
+    "type_zh": "主基线",
+    "description_zh": "不训练，直接评估RS-EoT-7B",
+    "reference": null
+  }
+}

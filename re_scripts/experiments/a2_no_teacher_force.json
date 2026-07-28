@@ -1,0 +1,14 @@
+{
+  "trajectory": {
+    "teacher_force_final_answer": false
+  },
+  "experiment": {
+    "name": "a2_no_teacher_force",
+    "ablation": "teacher_force",
+    "code": "A2",
+    "name_zh": "不使用GT最终框替换",
+    "type_zh": "消融",
+    "description_zh": "以B3为参照，关闭teacher forcing",
+    "reference": "B3"
+  }
+}

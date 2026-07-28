@@ -1,0 +1,16 @@
+{
+  "data_conversion": {
+    "build_classification_tasks": false,
+    "build_grounding_tasks": true,
+    "build_detection_tasks": true
+  },
+  "experiment": {
+    "name": "a7_grounding_only",
+    "ablation": "task_mixture",
+    "code": "A7",
+    "name_zh": "只保留Ref Grounding",
+    "type_zh": "消融",
+    "description_zh": "以B3为参照，去掉分类与Direct检测任务",
+    "reference": "B3"
+  }
+}

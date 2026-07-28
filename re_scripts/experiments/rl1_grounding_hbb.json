@@ -1,0 +1,17 @@
+{
+  "reinforcement_learning": {
+    "enabled": true,
+    "stage1": {
+      "coordinate_target": "norm1000_hbb",
+      "reward_profile": "hbb_iou_class_format_v1"
+    }
+  },
+  "experiment": {
+    "name": "rl1_grounding_hbb",
+    "code": "RL1",
+    "name_zh": "HBB Grounding强化学习",
+    "type_zh": "强化学习",
+    "description_zh": "在SFT模型上先用Ref HBB和IoU奖励做GRPO",
+    "reference": null
+  }
+}

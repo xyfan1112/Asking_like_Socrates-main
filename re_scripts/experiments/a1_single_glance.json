@@ -1,0 +1,16 @@
+{
+  "trajectory": {
+    "prompt_profile": "single_glance_ablation",
+    "max_reasoning_rounds": 2,
+    "min_perception_rounds_strict": 1
+  },
+  "experiment": {
+    "name": "a1_single_glance",
+    "ablation": "multi_round",
+    "code": "A1",
+    "name_zh": "单次看图",
+    "type_zh": "消融",
+    "description_zh": "以B3为参照，取消多轮视觉观察",
+    "reference": "B3"
+  }
+}

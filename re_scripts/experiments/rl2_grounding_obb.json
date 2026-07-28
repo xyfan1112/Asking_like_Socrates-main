@@ -1,0 +1,18 @@
+{
+  "reinforcement_learning": {
+    "enabled": true,
+    "stage1": {
+      "coordinate_target": "norm1000_obb",
+      "reward_profile": "obb_iou_class_format_v1"
+    }
+  },
+  "experiment": {
+    "name": "rl2_grounding_obb",
+    "experimental": true,
+    "code": "RL2",
+    "name_zh": "OBB Grounding强化学习",
+    "type_zh": "强化学习扩展",
+    "description_zh": "使用OBB多边形IoU奖励，属于项目扩展",
+    "reference": null
+  }
+}

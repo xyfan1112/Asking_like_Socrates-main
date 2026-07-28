@@ -1,0 +1,17 @@
+{
+  "trajectory": {
+    "prompt_profile": "obb_grounding_no_alias",
+    "geometry_gate": {
+      "classification_alias_mapping": false
+    }
+  },
+  "experiment": {
+    "name": "a3_no_dota_alias",
+    "ablation": "class_ontology",
+    "code": "A3",
+    "name_zh": "不做类别别名映射",
+    "type_zh": "消融",
+    "description_zh": "以B3为参照，移除bus→large vehicle等映射",
+    "reference": "B3"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "trajectory": {
+    "engine": "official_socratic_agent",
+    "prompt_profile": "official_general",
+    "teacher_force_final_answer": true
+  },
+  "training": {
+    "dataset_variant": "mixed"
+  },
+  "experiment": {
+    "name": "b2_socratic_official_general",
+    "code": "B2",
+    "name_zh": "官方通用Socratic SFT",
+    "type_zh": "主实验",
+    "description_zh": "Direct OBB加官方风格通用多智能体轨迹",
+    "reference": null
+  }
+}
