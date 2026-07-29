@@ -750,9 +750,9 @@ docker exec -it llamafactory bash
 
 <details><summary>Use Docker volumes</summary>
 
-You can uncomment `VOLUME [ "/root/.cache/huggingface", "/app/shared_data", "/app/output" ]` in the Dockerfile to use data volumes.
+You can uncomment `VOLUME [ "/home/nhl/.cache/huggingface", "/app/shared_data", "/app/output" ]` in the Dockerfile to use data volumes.
 
-When building the Docker image, use `-v ./hf_cache:/root/.cache/huggingface` argument to mount the local directory to the container. The following data volumes are available.
+When building the Docker image, use `-v ./hf_cache:/home/nhl/.cache/huggingface` argument to mount the local directory to the container. The following data volumes are available.
 
 - `hf_cache`: Utilize Hugging Face cache on the host machine.
 - `shared_data`: The directionary to store datasets on the host machine.

@@ -2,8 +2,8 @@
 set -euo pipefail
 
 CONDA_ENV="als_vllm"
-SCRIPT_DIR="/root/Asking_like_Socrates/eval_vrsbench"
-RESULT_DIR="/root/fxy/dota8_vlm_obb_results"
+SCRIPT_DIR="/home/nhl/Asking_like_Socrates/eval_vrsbench"
+RESULT_DIR="/home/nhl/fxy/dota8_vlm_obb_results"
 
 source "$HOME/miniconda3/etc/profile.d/conda.sh"
 conda activate "$CONDA_ENV"

@@ -2,13 +2,13 @@
 set -euo pipefail
 
 # 统一路径。路径不同，只修改这里。
-REPO_ROOT="/root/桌面/Asking_like_Socrates"
+REPO_ROOT="/home/nhl/桌面/Asking_like_Socrates"
 EVAL_DIR="${REPO_ROOT}/eval_vrsbench"
-DATA_ROOT="/root/fxy/datasets/VRSBench"
+DATA_ROOT="/home/nhl/fxy/datasets/VRSBench"
 IMAGE_DIR="${DATA_ROOT}/Images_val"
 JSON_PATH="${DATA_ROOT}/VRSBench_EVAL_vqa.json"
-MODEL_DIR="/root/fxy/models/RS-EoT-7B"
-RESULT_DIR="/root/fxy/results/VRSBench_RS-EoT-7B"
+MODEL_DIR="/home/nhl/fxy/models/RS-EoT-7B"
+RESULT_DIR="/home/nhl/fxy/results/VRSBench_RS-EoT-7B"
 
 mkdir -p "${RESULT_DIR}"
 

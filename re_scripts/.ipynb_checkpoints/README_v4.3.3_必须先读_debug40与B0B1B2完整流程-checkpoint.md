@@ -76,7 +76,7 @@ conda activate als_sft
 后续始终使用同一个配置：
 
 ```bash
-CFG=/root/Asking_like_Socrates-main/re_scripts/settings.json
+CFG=/home/nhl/Asking_like_Socrates-main/re_scripts/settings.json
 test -f "$CFG" || { echo "缺少 $CFG"; exit 2; }
 ```
 
@@ -334,7 +334,7 @@ PY
 ```
 
 ## 11. 训练匹配的 B1 与 B2
-bash /root/Asking_like_Socrates-main/re_scripts/main_layer/train_matched_b1_b2.sh
+bash /home/nhl/Asking_like_Socrates-main/re_scripts/main_layer/train_matched_b1_b2.sh
 
 B1/B2 都由 full 的同一批 strict pair 自动产生。不要再单独执行
 `prepare-direct-sft` 作为主实验，也不要把它和 `train-b1` 粘在同一行。

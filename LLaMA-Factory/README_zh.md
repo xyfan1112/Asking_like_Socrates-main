@@ -752,9 +752,9 @@ docker exec -it llamafactory bash
 
 <details><summary>使用数据卷</summary>
 
-您可以通过移除 Dockerfile 中 `VOLUME [ "/root/.cache/huggingface", "/app/shared_data", "/app/output" ]` 的注释来使用数据卷。
+您可以通过移除 Dockerfile 中 `VOLUME [ "/home/nhl/.cache/huggingface", "/app/shared_data", "/app/output" ]` 的注释来使用数据卷。
 
-在构建 Docker 时使用参数 `-v ./hf_cache:/root/.cache/huggingface` 来挂载数据卷。各个数据卷的含义表示如下。
+在构建 Docker 时使用参数 `-v ./hf_cache:/home/nhl/.cache/huggingface` 来挂载数据卷。各个数据卷的含义表示如下。
 
 - `hf_cache`：使用宿主机的 Hugging Face 缓存文件夹。
 - `shared_data`：宿主机中存放数据集的文件夹路径。

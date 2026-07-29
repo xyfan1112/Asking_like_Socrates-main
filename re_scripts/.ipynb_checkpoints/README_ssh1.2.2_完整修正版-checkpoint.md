@@ -79,7 +79,7 @@ pytest -q \
 ## 启动与Debug40
 
 ```bash
-cd /root/Asking_like_Socrates-main/re_scripts_ssh1.2.2
+cd /home/nhl/Asking_like_Socrates-main/re_scripts_ssh1.2.2
 CFG=$PWD/settings.json
 
 python main_layer/run.py stop-agents --settings "$CFG" || true
