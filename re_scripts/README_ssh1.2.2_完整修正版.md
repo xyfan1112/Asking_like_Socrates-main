@@ -1,5 +1,95 @@
 # re_scripts_ssh1.2.2 完整修正版
 
+保证settings的
+"dota128_root": "/home/nhl/fxy/datasets/dota128",
+
+CFG=/home/nhl/Asking_like_Socrates-main/re_scripts/settings.json 
+
+无泄漏的数据集
+python main_layer/run.py split-scenes   --settings settings.json   --output-root /home/nhl/fxy/datasets/dota128_scene_disjoint   --settings-output /home/nhl/Asking_like_Socrates-main/re_scripts/settings.scene_disjoint.json
+
+CFG=/home/nhl/Asking_like_Socrates-main/re_scripts/settings.scene_disjoint.json
+
+生成QA
+python main_layer/run.py data-full --settings "$CFG"
+
+启动智能体
+python main_layer/run.py start-agents --settings "$CFG"
+
+
+python main_layer/run.py official-socratic-full \
+  --settings "$CFG" \
+  train debug 40 fresh
+
+
+echo "debug_exit=$?"
+含义：
+
+- `0`：PASS，可以继续 full；
+- `2`：硬错误/配置错误，禁止继续；
+- `3`：质量 WARN，仍然禁止继续。
+
+只有成功时末尾才会出现：
+
+```text
+[DEBUG GATE PASS] debug audit met every v4.3.3 quality threshold.
+[NEXT] Only now may you run official-socratic-full in full/fresh mode.
+```
+
+再用独立检查器复核最新 audit：
+
+```bash
+python tools/check_latest_debug_audit.py --settings "$CFG"
+```
+
+debug40 的硬性通过标准是：
+
+| 字段 | 标准 |
+|---|---:|
+| `status` | `PASS` |
+| `api.api_errors` | 0 |
+| `api.length_truncation` | 0 |
+| `api.unrepaired` | 0 |
+| `coordinate_rewrite_mutations` | 0 |
+| `api.perceiver_context_missing` | 0 |
+| `api.perceiver_focus_roi_missing` | 0 |
+| `duplicate_question_trajectories` | 0 |
+| `classification_contradiction_trajectories` | 0 |
+| `classification_leading_question_trajectories` | 0 |
+| `strict_rate_by_task.ref_classification` | ≥ 0.70 |
+| `strict_rate_by_task.ref_grounding_obb` | ≥ 0.30 |
+| grounding strict | 每条同时通过 `iou_gate` 和 `center_gate` |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 本目录基于用户上传的 `re_scripts_ssh1.2.2.zip` 整合，保留原有模型路径、GPU编号、端口、数据目录和 `results4.3.3` 输出目录。
 
 ## 核心输入流

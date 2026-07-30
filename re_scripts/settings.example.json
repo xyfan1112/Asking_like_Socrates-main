@@ -14,8 +14,8 @@
     "conda_executable": "/home/nhl/miniconda3/bin/conda",
     "workloads": {
       "data": {
-        "conda_env": "als_sft",
-        "python": "/home/nhl/miniconda3/envs/als_sft/bin/python",
+        "conda_env": "",
+        "python": "/home/nhl/miniconda3/bin/python",
         "allow_fallback_to_current": false,
         "required_module": "datasets"
       },
@@ -38,8 +38,8 @@
         "required_module": "verl"
       },
       "qwen3_sft": {
-        "conda_env": "als_sft",
-        "python": "",
+        "conda_env": "",
+        "python": "/home/nhl/miniconda3/bin/python",
         "required_module": "llamafactory",
         "allow_fallback_to_current": false
       },
@@ -74,7 +74,7 @@
     "datasets_root": "/home/nhl/fxy/datasets4.3.3",
     "results_root": "/home/nhl/fxy/results4.3.3",
     "models_root": "/home/nhl/fxy/models",
-    "dota128_root": "/home/nhl/fxy/datasets/dota128",
+    "dota128_root": "/home/nhl/fxy/datasets/dota128_scene_disjoint",
     "dota128_ref_root": "/home/nhl/fxy/datasets4.3.3/dota128-Ref4.3.3",
     "dota128_llamafactory_root": "/home/nhl/fxy/datasets4.3.3/dota128-llamafactory4.3.3",
     "dota128_rl_root": "/home/nhl/fxy/datasets4.3.3/dota128-rl4.3.3",
@@ -220,7 +220,7 @@
       "host": "127.0.0.1",
       "port": 8001,
       "gpu": 0,
-      "gpu_memory_utilization": 0.32,
+      "gpu_memory_utilization": 0.8,
       "max_model_len": 12288,
       "max_num_seqs": 2,
       "max_tokens": 896,
@@ -234,7 +234,7 @@
       "host": "127.0.0.1",
       "port": 8002,
       "gpu": 1,
-      "gpu_memory_utilization": 0.32,
+      "gpu_memory_utilization": 0.8,
       "max_model_len": 8192,
       "max_num_seqs": 2,
       "max_tokens": 512,
@@ -247,8 +247,8 @@
       "base_url": "http://127.0.0.1:8003/v1",
       "host": "127.0.0.1",
       "port": 8003,
-      "gpu": 0,
-      "gpu_memory_utilization": 0.2,
+      "gpu": 2,
+      "gpu_memory_utilization": 0.8,
       "max_model_len": 4096,
       "max_num_seqs": 2,
       "max_tokens": 256,

@@ -120,8 +120,19 @@ start_role() {
     --max-num-seqs "$max_num_seqs"
     --trust-remote-code
   )
+  # 双A6000首次跑通：关闭CUDA Graph，降低启动显存。
+  cmd+=(--enforce-eager)
+
   if [[ "$is_multimodal" == "true" ]]; then
-    cmd+=(--limit-mm-per-prompt '{"image":2}')
+    # Perceiver只使用图像，不使用视频。
+    cmd+=(--limit-mm-per-prompt '{"image":2,"video":0}')
+  else
+    # Reasoner和Verifier为纯文本角色。
+    # 禁止所有视觉输入，并跳过最大多模态输入的显存profiling。
+    cmd+=(
+      --limit-mm-per-prompt '{"image":0,"video":0}'
+      --skip-mm-profiling
+    )
   fi
 
   {
