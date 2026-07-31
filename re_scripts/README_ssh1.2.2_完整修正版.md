@@ -1,17 +1,17 @@
 # re_scripts_ssh1.2.2 完整修正版
 
 ## 1.保证settings
-"dota128_root": "/home/nhl/fxy/datasets/dota128",
+"dota128_root": "/home/yk/fxy/datasets/dota128",
 
 
 ## 2.无泄漏的数据集
 
-CFG=/home/nhl/Asking_like_Socrates-main/re_scripts/settings.json 
+CFG=/home/yk/Asking_like_Socrates-main/re_scripts/settings.json 
 
-python main_layer/run.py split-scenes   --settings settings.json   --output-root /home/nhl/fxy/datasets/dota128_scene_disjoint   --settings-output /home/nhl/Asking_like_Socrates-main/re_scripts/settings.scene_disjoint.json
+python main_layer/run.py split-scenes   --settings settings.json   --output-root /home/yk/fxy/datasets/dota128_scene_disjoint   --settings-output /home/yk/Asking_like_Socrates-main/re_scripts/settings.scene_disjoint.json
 
 ## 3.生成QA
-CFG=/home/nhl/Asking_like_Socrates-main/re_scripts/settings.scene_disjoint.json
+CFG=/home/yk/Asking_like_Socrates-main/re_scripts/settings.scene_disjoint.json
 
 python main_layer/run.py data-full --settings "$CFG"
 
@@ -184,7 +184,7 @@ pytest -q \
 ## 启动与Debug40
 
 ```bash
-cd /home/nhl/Asking_like_Socrates-main/re_scripts_ssh1.2.2
+cd /home/yk/Asking_like_Socrates-main/re_scripts_ssh1.2.2
 CFG=$PWD/settings.json
 
 python main_layer/run.py stop-agents --settings "$CFG" || true

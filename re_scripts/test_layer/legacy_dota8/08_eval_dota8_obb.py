@@ -37,8 +37,8 @@ from PIL import Image
 # 配置区
 # ============================================================
 
-DATASET_ROOT = Path("/home/nhl/fxy/datasets/dota8")
-OUTPUT_ROOT = Path("/home/nhl/fxy/dota8_vlm_obb_results")
+DATASET_ROOT = Path("/home/yk/fxy/datasets/dota8")
+OUTPUT_ROOT = Path("/home/yk/fxy/dota8_vlm_obb_results")
 
 MODELS = ("Qwen", "RS")
 MODES = ("direct", "prompt")

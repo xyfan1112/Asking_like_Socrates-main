@@ -14,16 +14,16 @@ v4.3 错误地做成了：
 
 ```text
 YAML dataset_dir:
-/home/nhl/fxy/datasets/dota128-llamafactory
+/home/yk/fxy/datasets/dota128-llamafactory
 
 实际注册位置：
-/home/nhl/Asking_like_Socrates/LLaMA-Factory/data/dataset_info.json
+/home/yk/Asking_like_Socrates/LLaMA-Factory/data/dataset_info.json
 ```
 
 因此训练必然寻找：
 
 ```text
-/home/nhl/fxy/datasets/dota128-llamafactory/dataset_info.json
+/home/yk/fxy/datasets/dota128-llamafactory/dataset_info.json
 ```
 
 而该文件没有生成。
@@ -31,7 +31,7 @@ YAML dataset_dir:
 v4.3.1 改为自包含目录：
 
 ```text
-/home/nhl/fxy/datasets/dota128-llamafactory/
+/home/yk/fxy/datasets/dota128-llamafactory/
 ├── dataset_info.json
 ├── dota128_direct_train_official.json
 └── dota128_direct_val_official.json
@@ -72,7 +72,7 @@ DOTA原始标签
 
 ```bash
 conda activate als_sft
-cd /home/nhl/Asking_like_Socrates/re_scripts
+cd /home/yk/Asking_like_Socrates/re_scripts
 
 python main_layer/run.py b1-from-scratch \
   --settings settings.json \
@@ -138,8 +138,8 @@ invalid_direct=0
 关键文件：
 
 ```text
-/home/nhl/fxy/results/dota128_pipeline/agent_inputs/train_direct.json
-/home/nhl/fxy/results/dota128_pipeline/agent_inputs/val_direct.json
+/home/yk/fxy/results/dota128_pipeline/agent_inputs/train_direct.json
+/home/yk/fxy/results/dota128_pipeline/agent_inputs/val_direct.json
 ```
 
 ### 2. 生成Direct SFT和数据注册文件
@@ -159,9 +159,9 @@ python main_layer/run.py prepare-direct-sft \
 必须生成：
 
 ```text
-/home/nhl/fxy/datasets/dota128-llamafactory/dataset_info.json
-/home/nhl/fxy/datasets/dota128-llamafactory/dota128_direct_train_official.json
-/home/nhl/fxy/datasets/dota128-llamafactory/dota128_direct_val_official.json
+/home/yk/fxy/datasets/dota128-llamafactory/dataset_info.json
+/home/yk/fxy/datasets/dota128-llamafactory/dota128_direct_train_official.json
+/home/yk/fxy/datasets/dota128-llamafactory/dota128_direct_val_official.json
 ```
 
 注意：训练依赖第一个外部 `dataset_info.json`，不依赖官方目录中的镜像。
@@ -199,13 +199,13 @@ python main_layer/run.py generate-train-config \
 
 ```bash
 grep -E 'dataset_dir|^dataset:|eval_dataset' \
-  /home/nhl/fxy/results/dota128_training/configs/b1_direct_lora.yaml
+  /home/yk/fxy/results/dota128_training/configs/b1_direct_lora.yaml
 ```
 
 必须是：
 
 ```text
-dataset_dir: /home/nhl/fxy/datasets/dota128-llamafactory
+dataset_dir: /home/yk/fxy/datasets/dota128-llamafactory
 dataset: dota128_direct_train_official
 eval_dataset: dota128_direct_val_official
 ```
@@ -275,7 +275,7 @@ validate-lf-contract
 训练输出：
 
 ```text
-/home/nhl/fxy/results/dota128_training/b1_direct_lora
+/home/yk/fxy/results/dota128_training/b1_direct_lora
 ```
 
 ---
@@ -309,7 +309,7 @@ python main_layer/run.py merge --settings settings.json b1
 预期：
 
 ```text
-/home/nhl/fxy/models/RS-EoT-7B-DOTA128-Direct-Merged
+/home/yk/fxy/models/RS-EoT-7B-DOTA128-Direct-Merged
 ```
 
 之后启动测试服务并评估B1。B2 Socratic应等新的Grounding轨迹通过严格门控后再训练。

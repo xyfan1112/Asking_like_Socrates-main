@@ -46,13 +46,13 @@ Reasoner 的默认生成上限也从 768 提高到 1024；Perceiver 的
 ## 3. 覆盖安装 v4.3.3
 
 先确定实际仓库目录。你最新日志使用的是
-`/home/nhl/Asking_like_Socrates-main`；如果没有 `-main`，下面会自动选择旧路径。
+`/home/yk/Asking_like_Socrates-main`；如果没有 `-main`，下面会自动选择旧路径。
 
 ```bash
-if [[ -d /home/nhl/Asking_like_Socrates-main/re_scripts ]]; then
-  REPO=/home/nhl/Asking_like_Socrates-main
+if [[ -d /home/yk/Asking_like_Socrates-main/re_scripts ]]; then
+  REPO=/home/yk/Asking_like_Socrates-main
 else
-  REPO=/home/nhl/Asking_like_Socrates
+  REPO=/home/yk/Asking_like_Socrates
 fi
 
 cd "$REPO"
@@ -76,7 +76,7 @@ conda activate als_sft
 后续始终使用同一个配置：
 
 ```bash
-CFG=/home/nhl/Asking_like_Socrates-main/re_scripts/settings.json
+CFG=/home/yk/Asking_like_Socrates-main/re_scripts/settings.json
 test -f "$CFG" || { echo "缺少 $CFG"; exit 2; }
 ```
 
@@ -334,7 +334,7 @@ PY
 ```
 
 ## 11. 训练匹配的 B1 与 B2
-bash /home/nhl/Asking_like_Socrates-main/re_scripts/main_layer/train_matched_b1_b2.sh
+bash /home/yk/Asking_like_Socrates-main/re_scripts/main_layer/train_matched_b1_b2.sh
 
 B1/B2 都由 full 的同一批 strict pair 自动产生。不要再单独执行
 `prepare-direct-sft` 作为主实验，也不要把它和 `train-b1` 粘在同一行。

@@ -15,7 +15,7 @@
 
 ```bash
 conda activate als_sft
-cd /home/nhl/Asking_like_Socrates/re_scripts
+cd /home/yk/Asking_like_Socrates/re_scripts
 python main_layer/run.py prepare-direct-sft --settings settings.json --register
 ```
 
@@ -82,7 +82,7 @@ python main_layer/run.py build-official-parquet --settings settings.json --split
 查看：
 
 ```text
-/home/nhl/fxy/results/dota128_pipeline/ref_previews
+/home/yk/fxy/results/dota128_pipeline/ref_previews
 ```
 
 重点：
@@ -173,9 +173,9 @@ python main_layer/run.py merge --settings settings.json b2
 
 ```bash
 python tools/audit_socratic_artifacts.py \
-  --raw /home/nhl/fxy/results/dota128_pipeline/official_socratic/raw/dota128_train_official.jsonl \
-  --strict /home/nhl/fxy/results/dota128_pipeline/official_socratic/raw/dota128_train_official_strict.jsonl \
-  --merge /home/nhl/fxy/results/dota128_pipeline/official_socratic/postproc/dota128_train_official_merge.json
+  --raw /home/yk/fxy/results/dota128_pipeline/official_socratic/raw/dota128_train_official.jsonl \
+  --strict /home/yk/fxy/results/dota128_pipeline/official_socratic/raw/dota128_train_official_strict.jsonl \
+  --merge /home/yk/fxy/results/dota128_pipeline/official_socratic/postproc/dota128_train_official_merge.json
 ```
 
 作用：统计 Grounding/Classification 成功率、坐标制是否被重写、旧式 Query 数量、strict/merge 的任务构成，以及明显矛盾的分类轨迹。只有 Grounding 和 Classification 都达到门槛时才允许作为 B2 数据。

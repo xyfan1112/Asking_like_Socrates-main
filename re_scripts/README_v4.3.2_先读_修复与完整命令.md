@@ -138,20 +138,20 @@ focus region 是对象指针，不是分类答案，也不是人工新标注。�
 
 ## 6. 从零运行命令
 
-以下命令假定仓库在 `/home/nhl/Asking_like_Socrates`，数据和结果仍位于 `/home/nhl/fxy`。
+以下命令假定仓库在 `/home/yk/Asking_like_Socrates`，数据和结果仍位于 `/home/yk/fxy`。
 
 ### 6.1 安装包并检查配置
 
 先备份旧脚本，再解压本包，使目录为：
 
 ```text
-/home/nhl/Asking_like_Socrates/re_scripts
+/home/yk/Asking_like_Socrates/re_scripts
 ```
 
 然后：
 
 ```bash
-cd /home/nhl/Asking_like_Socrates/re_scripts
+cd /home/yk/Asking_like_Socrates/re_scripts
 conda activate als_sft
 python main_layer/run.py preflight --settings settings.json
 ```
@@ -159,10 +159,10 @@ python main_layer/run.py preflight --settings settings.json
 确认以下模型目录真实存在：
 
 ```text
-/home/nhl/fxy/models/Qwen2.5-7B-Instruct-AWQ
-/home/nhl/fxy/models/Qwen2.5-VL-7B-Instruct-AWQ
-/home/nhl/fxy/models/Qwen2.5-3B-Instruct-AWQ
-/home/nhl/fxy/models/RS-EoT-7B
+/home/yk/fxy/models/Qwen2.5-7B-Instruct-AWQ
+/home/yk/fxy/models/Qwen2.5-VL-7B-Instruct-AWQ
+/home/yk/fxy/models/Qwen2.5-3B-Instruct-AWQ
+/home/yk/fxy/models/RS-EoT-7B
 ```
 
 ### 6.2 生成无场景泄漏的数据副本
@@ -170,8 +170,8 @@ python main_layer/run.py preflight --settings settings.json
 ```bash
 python main_layer/run.py split-scenes \
   --settings settings.json \
-  --output-root /home/nhl/fxy/datasets/dota128_scene_disjoint \
-  --settings-output /home/nhl/Asking_like_Socrates-main/re_scripts/settings.scene_disjoint.json
+  --output-root /home/yk/fxy/datasets/dota128_scene_disjoint \
+  --settings-output /home/yk/Asking_like_Socrates-main/re_scripts/settings.scene_disjoint.json
 ```
 
 此命令优先创建硬链接，失败才复制；不会删除或修改原始 DOTA128。
@@ -179,7 +179,7 @@ python main_layer/run.py split-scenes \
 后续都使用：
 
 ```bash
-CFG=/home/nhl/Asking_like_Socrates-main/re_scripts/settings.scene_disjoint.json
+CFG=/home/yk/Asking_like_Socrates-main/re_scripts/settings.scene_disjoint.json
 ```
 
 ### 6.3 完整数据层
@@ -191,9 +191,9 @@ python main_layer/run.py data-full --settings "$CFG"
 必须为 PASS：
 
 ```text
-/home/nhl/fxy/datasets/dota128-Ref/validation_report.json
-/home/nhl/fxy/results/dota128_pipeline/reports/lineage_audit.json
-/home/nhl/fxy/results/dota128_pipeline/reports/data_layer_final_report.json
+/home/yk/fxy/datasets/dota128-Ref/validation_report.json
+/home/yk/fxy/results/dota128_pipeline/reports/lineage_audit.json
+/home/yk/fxy/results/dota128_pipeline/reports/data_layer_final_report.json
 ```
 
 重点检查：
@@ -233,7 +233,7 @@ python main_layer/run.py official-socratic-full \
 debug 报告位于：
 
 ```text
-/home/nhl/fxy/results/dota128_pipeline/official_socratic/raw/*debug*.audit.json
+/home/yk/fxy/results/dota128_pipeline/official_socratic/raw/*debug*.audit.json
 ```
 
 ### 6.6 全量 fresh 生成并构造匹配 B1/B2
@@ -247,9 +247,9 @@ python main_layer/run.py official-socratic-full \
 必须检查：
 
 ```text
-/home/nhl/fxy/results/dota128_pipeline/official_socratic/raw/dota128_train_official_strict.report.json
-/home/nhl/fxy/datasets/dota128-llamafactory/dota128_train_official_llamafactory_report.json
-/home/nhl/fxy/results/dota128_training/validation_report_all.json
+/home/yk/fxy/results/dota128_pipeline/official_socratic/raw/dota128_train_official_strict.report.json
+/home/yk/fxy/datasets/dota128-llamafactory/dota128_train_official_llamafactory_report.json
+/home/yk/fxy/results/dota128_training/validation_report_all.json
 ```
 
 关键字段：
@@ -326,9 +326,9 @@ python main_layer/run.py compare-b0-b1-b2 --settings "$CFG"
 输出：
 
 ```text
-/home/nhl/fxy/results/dota128_testing/comparison/b0_b1_b2/comparison.json
-/home/nhl/fxy/results/dota128_testing/comparison/b0_b1_b2/comparison.csv
-/home/nhl/fxy/results/dota128_testing/comparison/b0_b1_b2/comparison.md
+/home/yk/fxy/results/dota128_testing/comparison/b0_b1_b2/comparison.json
+/home/yk/fxy/results/dota128_testing/comparison/b0_b1_b2/comparison.csv
+/home/yk/fxy/results/dota128_testing/comparison/b0_b1_b2/comparison.md
 ```
 
 ## 7. 如何解释实验

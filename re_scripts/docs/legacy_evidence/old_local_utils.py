@@ -23,7 +23,7 @@ def load_settings():
     settings_path = Path(
         os.environ.get(
             "FINED_SETTINGS",
-            "/home/nhl/Asking_like_Socrates/fined_scripts/settings.json",
+            "/home/yk/Asking_like_Socrates/fined_scripts/settings.json",
         )
     )
 
@@ -34,7 +34,7 @@ def load_settings():
 SETTINGS = load_settings()
 
 RUNTIME_ENV = Path(
-    "/home/nhl/Asking_like_Socrates/fined_scripts/local_agent_runtime.env"
+    "/home/yk/Asking_like_Socrates/fined_scripts/local_agent_runtime.env"
 )
 
 if RUNTIME_ENV.is_file():
