@@ -14,8 +14,8 @@
     "conda_executable": "/home/nhl/miniconda3/bin/conda",
     "workloads": {
       "data": {
-        "conda_env": "",
-        "python": "/home/nhl/miniconda3/bin/python",
+        "conda_env": "als_sft",
+        "python": "/home/nhl/miniconda3/envs/als_sft/bin/python",
         "allow_fallback_to_current": false,
         "required_module": "datasets"
       },
@@ -222,7 +222,7 @@
       "gpu": 0,
       "gpu_memory_utilization": 0.46,
       "max_model_len": 12288,
-      "max_num_seqs": 1,
+      "max_num_seqs": 2,
       "max_tokens": 896,
       "temperature": 0.0,
       "is_multimodal": false
@@ -250,7 +250,7 @@
       "gpu": 0,
       "gpu_memory_utilization": 0.39,
       "max_model_len": 4096,
-      "max_num_seqs": 1,
+      "max_num_seqs": 2,
       "max_tokens": 256,
       "temperature": 0.0,
       "is_multimodal": false

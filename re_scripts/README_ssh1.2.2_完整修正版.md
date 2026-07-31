@@ -1,19 +1,26 @@
 # re_scripts_ssh1.2.2 完整修正版
 
-保证settings的
+## 1.保证settings
 "dota128_root": "/home/nhl/fxy/datasets/dota128",
+
+
+## 2.无泄漏的数据集
 
 CFG=/home/nhl/Asking_like_Socrates-main/re_scripts/settings.json 
 
-无泄漏的数据集
 python main_layer/run.py split-scenes   --settings settings.json   --output-root /home/nhl/fxy/datasets/dota128_scene_disjoint   --settings-output /home/nhl/Asking_like_Socrates-main/re_scripts/settings.scene_disjoint.json
 
+## 3.生成QA
 CFG=/home/nhl/Asking_like_Socrates-main/re_scripts/settings.scene_disjoint.json
 
-生成QA
 python main_layer/run.py data-full --settings "$CFG"
 
-启动智能体
+## 4.启动智能体
+
+python main_layer/run.py stop-eval --settings "$CFG" rs_eot 8010
+
+python main_layer/run.py stop-agents --settings "$CFG"
+
 python main_layer/run.py start-agents --settings "$CFG"
 
 
@@ -21,8 +28,8 @@ python main_layer/run.py official-socratic-full \
   --settings "$CFG" \
   train debug 40 fresh
 
-
 echo "debug_exit=$?"
+
 含义：
 
 - `0`：PASS，可以继续 full；
@@ -61,6 +68,14 @@ debug40 的硬性通过标准是：
 | grounding strict | 每条同时通过 `iou_gate` 和 `center_gate` |
 
 
+## 5. 只有 debug40 PASS 后才跑 full
+
+```bash
+python main_layer/run.py official-socratic-full \
+  --settings "$CFG" \
+  train full 40 fresh
+
+```
 
 
 
