@@ -10,9 +10,14 @@ from collections import defaultdict, deque
 from pathlib import Path
 from typing import Any
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "main_layer"))
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(ROOT / "main_layer"))
 from common import (  # noqa: E402
+    CUSTOM_TAXONOMY,
     DOTA_CLASSES,
+    QA_LANGUAGE,
+    TAXONOMY_SHA256,
     coordinate_instruction,
     coordinate_points,
     format_flat_points,
@@ -24,6 +29,7 @@ from common import (  # noqa: E402
     write_json,
     write_jsonl,
 )
+from data_layer.qa_i18n import direct_detection_question  # noqa: E402
 
 
 def _answer_for(row: dict[str, Any], target: str) -> str:
@@ -99,7 +105,6 @@ def _direct_samples(
         for row in image_rows:
             by_class[row["class_name"]].append(row)
         width, height = image_rows[0]["image_width"], image_rows[0]["image_height"]
-        convention = coordinate_instruction(target, width, height)
         requested_classes: list[tuple[str, list[dict[str, Any]], bool]] = [
             (cls, cls_rows, False) for cls, cls_rows in sorted(by_class.items())
         ]
@@ -127,20 +132,25 @@ def _direct_samples(
                 answer = "FINAL_DETECTIONS\n" + "\n".join(lines) + "\nEND_DETECTIONS"
                 roi_target = _roi_to_target(roi_pixel, width, height, target)
                 roi_text = ",".join(f"{value:.2f}".rstrip("0").rstrip(".") for value in roi_target)
-                question = (
-                    f"Image size: {width}x{height}. Detect every {cls} object whose center lies inside "
-                    f"ROI [{roi_text}] using the same coordinate convention. "
-                    f"Use {convention}. Output one line per object as "
-                    "class_name|confidence|x1,y1,x2,y2,x3,y3,x4,y4, with corners in clockwise order, "
-                    "between FINAL_DETECTIONS and END_DETECTIONS. Coordinates in the answer remain "
-                    "relative to the full original image. If no matching object exists, return an empty block."
+                question = direct_detection_question(
+                    width=width,
+                    height=height,
+                    class_name=cls,
+                    roi_text=roi_text,
+                    coordinate_target=target,
+                    lang=QA_LANGUAGE,
+                )
+                direct_salt = (
+                    "direct_roi_v4_3_3"
+                    if not CUSTOM_TAXONOMY and QA_LANGUAGE == "en"
+                    else f"direct_roi_v4_3_3|{QA_LANGUAGE}|{TAXONOMY_SHA256}"
                 )
                 sample_id = stable_id(
                     image_path,
                     cls,
                     roi_text,
                     target,
-                    "direct_roi_v4_3_3",
+                    direct_salt,
                 )
                 samples.append(
                     {
@@ -152,6 +162,9 @@ def _direct_samples(
                         "metadata": {
                             "task": "detection_obb_by_class",
                             "sample_id": sample_id,
+                            "qa_language": QA_LANGUAGE,
+                            "taxonomy_mode": "custom" if CUSTOM_TAXONOMY else "dota",
+                            "taxonomy_sha256": TAXONOMY_SHA256,
                             "class_name": cls,
                             "coordinate_target": target,
                             "chunk_index": chunk_idx,
@@ -195,6 +208,10 @@ def main() -> None:
     report: dict[str, Any] = {
         "schema_version": "agent_inputs_v4_3_3",
         "coordinate_target": target,
+        "qa_language": QA_LANGUAGE,
+        "taxonomy_mode": "custom" if CUSTOM_TAXONOMY else "dota",
+        "taxonomy_sha256": TAXONOMY_SHA256,
+        "num_classes": len(DOTA_CLASSES),
         "validation_report": str(validation_path),
         "validation_passed": bool(validation.get("passed", False)),
         "forced": bool(args.force),
@@ -231,6 +248,15 @@ def main() -> None:
                     "source_ref_id": row["id"],
                     "scene_id": row.get("scene_id"),
                     "coordinate_target": target,
+                    "qa_language": row.get("qa_language", QA_LANGUAGE),
+                    "lang": row.get("qa_language", QA_LANGUAGE),
+                    "taxonomy_mode": row.get(
+                        "taxonomy_mode",
+                        "custom" if CUSTOM_TAXONOMY else "dota",
+                    ),
+                    "taxonomy_sha256": row.get(
+                        "taxonomy_sha256", TAXONOMY_SHA256
+                    ),
                     "obb_pixel": row["obb_pixel"],
                     "obb_norm100": row["obb_norm100"],
                     "obb_norm1000": row["obb_norm1000"],

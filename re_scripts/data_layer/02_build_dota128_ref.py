@@ -29,7 +29,10 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "main_layer"))
 from common import (  # noqa: E402
+    CUSTOM_TAXONOMY,
     DOTA_CLASSES,
+    QA_LANGUAGE,
+    TAXONOMY_SHA256,
     canonical_obb_points,
     coordinate_instruction,
     coordinate_points,
@@ -51,6 +54,11 @@ from common import (  # noqa: E402
 from data_layer.ref_semantics import (  # noqa: E402
     relation_from_delta,
     semantic_unique_for_target,
+)
+from data_layer.qa_i18n import (  # noqa: E402
+    classification_question as render_classification_question,
+    grounding_question as render_grounding_question,
+    render_reference,
 )
 
 SCHEMA_VERSION = "dota_ref_v4_3_3"
@@ -85,6 +93,15 @@ CLASS_FAMILY = {
 GROUND_HEAD = {
     "harbor": "harbor region",
 }
+
+# Custom taxonomies have no assumed hierarchy, aliases, region classes, or
+# DOTA-specific visual ontology.  Geometry remains available for every class.
+if CUSTOM_TAXONOMY:
+    NO_ORIENTATION_CLASSES = set()
+    NO_ASPECT_CLASSES = set()
+    REGION_CLASSES = set()
+    CLASS_FAMILY = {}
+    GROUND_HEAD = {}
 
 EXTREME_WORD = {
     "leftmost": "leftmost",
@@ -168,6 +185,10 @@ def _stable_different_class_anchor(
     generated text says "the <anchor class>" without encoding a nearest rule, an
     anchor class is usable only when exactly one such object exists in the image.
     """
+    # With arbitrary flat labels there is no safe non-leaking family name for an
+    # anchor. Disable anchor wording rather than inventing a hierarchy.
+    if CUSTOM_TAXONOMY:
+        return None
     cx, cy = obj["center_pixel"]
     diag = max(1e-6, math.hypot(width, height))
     candidates: list[tuple[float, dict[str, Any], float, float]] = []
@@ -212,6 +233,8 @@ def _stable_different_class_anchor(
 
 
 def _class_family(class_name: str) -> str:
+    if CUSTOM_TAXONOMY:
+        return "target object"
     return CLASS_FAMILY.get(class_name, "target")
 
 
@@ -533,27 +556,58 @@ def _make_row(
 
     grounding_ref = selected["grounding"] if selected else ""
     classification_ref = selected["classification"] if selected else ""
+    if selected and (CUSTOM_TAXONOMY or QA_LANGUAGE != "en"):
+        constraints = dict(selected.get("semantic_constraints") or {})
+        grounding_ref = render_reference(
+            constraints=constraints,
+            class_name=obj["class_name"],
+            lang=QA_LANGUAGE,
+            masked=False,
+        )
+        classification_ref = render_reference(
+            constraints=constraints,
+            class_name=obj["class_name"],
+            lang=QA_LANGUAGE,
+            masked=True,
+        )
+
     focus_text = ",".join(
         str(int(round(value))) for value in focus_hbb_norm1000
     )
-    grounding_question = (
-        f"Image size: {width}x{height}. The target is inside the coarse focus region "
-        f"[{focus_text}] in normalized [0,1000] coordinates; this region is only a "
-        f"search hint, so resolve the exact target from the reference. Locate {grounding_ref}. "
-        f"Use {instruction}. Return exactly one line as "
-        "class_name|x1,y1,x2,y2,x3,y3,x4,y4 with four corners in clockwise order."
-        if selected
-        else ""
-    )
-    classification_question = (
-        "The target is centered inside the coarse focus region "
-        f"[{focus_text}] in normalized [0,1000] "
-        f"coordinates and is described as {classification_ref}. "
-        f"Which canonical DOTA category is it? Choose exactly one label from: {', '.join(DOTA_CLASSES)}. "
-        "Use visual evidence; the focus region is only an object pointer. Return only the canonical class name."
-        if selected
-        else ""
-    )
+    if selected and (CUSTOM_TAXONOMY or QA_LANGUAGE != "en"):
+        grounding_question = render_grounding_question(
+            width=width,
+            height=height,
+            focus_text=focus_text,
+            reference=grounding_ref,
+            coordinate_target=coordinate_target,
+            lang=QA_LANGUAGE,
+        )
+        classification_question = render_classification_question(
+            focus_text=focus_text,
+            reference=classification_ref,
+            class_names=DOTA_CLASSES,
+            lang=QA_LANGUAGE,
+        )
+    else:
+        grounding_question = (
+            f"Image size: {width}x{height}. The target is inside the coarse focus region "
+            f"[{focus_text}] in normalized [0,1000] coordinates; this region is only a "
+            f"search hint, so resolve the exact target from the reference. Locate {grounding_ref}. "
+            f"Use {instruction}. Return exactly one line as "
+            "class_name|x1,y1,x2,y2,x3,y3,x4,y4 with four corners in clockwise order."
+            if selected
+            else ""
+        )
+        classification_question = (
+            "The target is centered inside the coarse focus region "
+            f"[{focus_text}] in normalized [0,1000] "
+            f"coordinates and is described as {classification_ref}. "
+            f"Which canonical DOTA category is it? Choose exactly one label from: {', '.join(DOTA_CLASSES)}. "
+            "Use visual evidence; the focus region is only an object pointer. Return only the canonical class name."
+            if selected
+            else ""
+        )
     socratic_quality = _socratic_quality(
         obj,
         candidate,
@@ -563,7 +617,12 @@ def _make_row(
         socratic_min_area_ratio,
     )
 
-    row_id = stable_id(split, image_path.name, obj["object_index"], ID_SALT)
+    row_salt = (
+        ID_SALT
+        if not CUSTOM_TAXONOMY and QA_LANGUAGE == "en"
+        else f"{ID_SALT}|{QA_LANGUAGE}|{TAXONOMY_SHA256}"
+    )
+    row_id = stable_id(split, image_path.name, obj["object_index"], row_salt)
     return {
         "id": row_id,
         "split": split,
@@ -575,6 +634,9 @@ def _make_row(
         "source": "dota128",
         "schema_version": SCHEMA_VERSION,
         "query_style_version": "natural_ref_focus_v4_semantic_unique_all_tasks",
+        "qa_language": QA_LANGUAGE,
+        "taxonomy_mode": "custom" if CUSTOM_TAXONOMY else "dota",
+        "taxonomy_sha256": TAXONOMY_SHA256,
         "class_id": obj["class_id"],
         "class_name": obj["class_name"],
         "object_index": obj["object_index"],
@@ -660,6 +722,10 @@ def main() -> int:
         "schema_version": SCHEMA_VERSION,
         "query_style_version": "natural_ref_focus_v4_semantic_unique_all_tasks",
         "coordinate_target": coordinate_target,
+        "qa_language": QA_LANGUAGE,
+        "taxonomy_mode": "custom" if CUSTOM_TAXONOMY else "dota",
+        "taxonomy_sha256": TAXONOMY_SHA256,
+        "num_classes": len(DOTA_CLASSES),
         "policy": {
             "raw_source_unchanged": True,
             "all_valid_objects_preserved": True,

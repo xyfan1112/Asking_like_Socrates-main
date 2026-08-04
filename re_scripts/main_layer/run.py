@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Unified experiment entry point.
+"""Unified experiment entry point for custom OBB bilingual patch v1.2.0.
 
 The main layer is intentionally thin: it materializes a base settings file plus
 one experiment profile, chooses the correct workload Python, records the exact
@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -18,6 +19,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "main_layer"))
 from config import load_json, materialize_settings, resolve_python  # noqa: E402
+from taxonomy import materialize_runtime_taxonomy  # noqa: E402
 
 PY_COMMANDS: dict[str, tuple[str, str]] = {
     "preflight": ("data", "main_layer/00_preflight.py"),
@@ -43,6 +45,13 @@ PY_COMMANDS: dict[str, tuple[str, str]] = {
     "rl-preflight": ("rl", "train_layer/rl/00_preflight_rl.py"),
     "score-vrsbench": ("data", "test_layer/07_score_existing_vrsbench.py"),
     "compare-b0-b1-b2": ("data", "test_layer/13_compare_b0_b1_b2.py"),
+    "check-taxonomy": ("data", "tools/check_custom_taxonomy.py"),
+    "check-debug": ("data", "tools/check_latest_debug_audit.py"),
+    "check-debug-infra": ("data", "tools/check_debug_infrastructure.py"),
+    "inspect-api-truncation": ("data", "tools/inspect_api_truncation.py"),
+    "generate-d1-config": ("sft", "train_layer/02c_generate_d1_direct_only_config.py"),
+    "validate-d1": ("sft", "train_layer/01c_validate_d1_direct_only.py"),
+    "register-d1-model": ("data", "tools/register_d1_model.py"),
 }
 
 SHELL_COMMANDS = {
@@ -64,7 +73,12 @@ SHELL_COMMANDS = {
     "stop-eval": "test_layer/stop_eval_model.sh",
     "test-matrix": "main_layer/run_test_matrix.sh",
     "rl-stage1": "train_layer/rl/03_launch_stage1_grounding.sh",
+    "train-d1": "train_layer/03c_train_d1_direct_only.sh",
+    "merge-d1": "train_layer/05c_export_d1_direct_only.sh",
 }
+
+INFRA_COMMANDS = {"start-agents", "stop-agents", "start-eval", "stop-eval"}
+
 
 
 
@@ -104,15 +118,91 @@ def _ensure_agent_inputs(settings: dict[str, Any], materialized: Path) -> None:
 
 def main() -> None:
     choices = sorted(set(PY_COMMANDS) | set(SHELL_COMMANDS) | {"show-config"})
-    ap = argparse.ArgumentParser(description="DOTA OBB × Asking Like Socrates experiment runner")
+    ap = argparse.ArgumentParser(
+        description="OBB × Asking Like Socrates experiment runner"
+    )
     ap.add_argument("command", choices=choices)
     ap.add_argument("--settings", default=str(ROOT / "settings.json"))
     ap.add_argument("--profile", help="Experiment profile name or JSON path")
+    ap.add_argument(
+        "--lang",
+        choices=("zh", "en"),
+        help="QA/Reasoner/Perceiver/Verifier natural language; structural tags stay unchanged",
+    )
+    ap.add_argument(
+        "--classes-file",
+        "--classes",
+        dest="classes_file",
+        help="UTF-8 classes.txt; one canonical class per line, line order equals class_id",
+    )
     args, rest = ap.parse_known_args()
 
     materialized = materialize_settings(args.settings, args.profile)
     settings = load_json(materialized)
-    print(f"[CONFIG] materialized settings: {materialized}")
+    catalog = None
+
+    if args.command in INFRA_COMMANDS:
+        if args.lang or args.classes_file:
+            print(
+                f"[INFO] {args.command} only manages a model server; "
+                "--lang/--classes-file are ignored. Use a zh settings file "
+                "to place logs/PIDs under the zh output root."
+            )
+        os.environ["ALS_SETTINGS_PATH"] = str(materialized)
+        print(f"[CONFIG] materialized settings: {materialized}")
+        print(f"[INFRA] language-neutral command: {args.command}")
+    else:
+        catalog = materialize_runtime_taxonomy(
+            settings,
+            classes_file=args.classes_file,
+            language=args.lang,
+        )
+        official = settings.setdefault("official_socratic", {})
+        if catalog.language == "zh":
+            official["image_meta_pre"] = (
+                "所提供图像为遥感 RGB 图像。只能依据可见图像证据回答。"
+                "坐标必须遵守原始任务中明确给出的坐标制。\n"
+            )
+            official["verify_inst"] = (
+                "最终类别必须与当前 classes.txt 中某一标准类别完全一致。"
+                "分类任务的中间视觉问题必须类别中性，不得直接说出、比较或猜测任何候选类别。"
+                "定位任务必须始终指向同一目标和正确图像区域。"
+                "启用 GT teacher forcing 时，轨迹中的近似坐标不要求与 GT 数值完全相同，"
+                "但错误目标、错误类别、错误区域或非法四边形必须拒绝。"
+            )
+        else:
+            official["image_meta_pre"] = (
+                "The provided imagery is a remote-sensing RGB image. Answer only "
+                "from visible image evidence and follow the coordinate convention "
+                "stated in the original task.\n"
+            )
+            official["verify_inst"] = (
+                "The final class must exactly match one canonical label from the "
+                "active classes.txt. Intermediate classification questions must be "
+                "class-neutral and must not reveal, compare, or guess candidate labels. "
+                "Grounding must stay bound to the same target and image region. With "
+                "GT teacher forcing, approximate trajectory coordinates need not equal "
+                "GT numerically, but wrong targets, classes, regions, or invalid "
+                "quadrilaterals must be rejected."
+            )
+        materialized.write_text(
+            json.dumps(settings, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        os.environ["ALS_QA_LANG"] = catalog.language
+        if catalog.classes_file:
+            os.environ["ALS_CLASSES_FILE"] = catalog.classes_file
+        else:
+            os.environ.pop("ALS_CLASSES_FILE", None)
+        os.environ["ALS_TAXONOMY_SHA256"] = catalog.sha256
+        os.environ["ALS_SETTINGS_PATH"] = str(materialized)
+        print(f"[CONFIG] materialized settings: {materialized}")
+        print(
+            f"[TAXONOMY] mode={'custom' if catalog.custom else 'dota'} "
+            f"classes={len(catalog.labels)} lang={catalog.language} "
+            f"classes_file={catalog.classes_file or '(built-in DOTA fallback)'} "
+            f"sha256={catalog.sha256[:16]}"
+        )
     if args.command == "show-config":
         print(json.dumps(settings, ensure_ascii=False, indent=2))
         return

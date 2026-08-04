@@ -32,6 +32,8 @@ from typing import Any, Dict, List, Optional, Tuple
 from openai import OpenAI
 from PIL import Image
 
+from main_layer.taxonomy import contains_term, multilingual_tokens, runtime_catalog
+
 try:
     from data_layer.prompts.profiles import apply_overlay
 except Exception:
@@ -54,7 +56,7 @@ BYPASS_STRUCTURED_REWRITE = _env_bool("ALS_BYPASS_STRUCTURED_REWRITE", True)
 COORDINATE_TARGET = (os.getenv("ALS_COORDINATE_TARGET", "norm1000_obb") or "norm1000_obb").strip()
 API_LOG_PATH = (os.getenv("ALS_API_LOG_PATH", "") or "").strip()
 QUESTION_SIMILARITY_THRESHOLD = float(
-    os.getenv("ALS_QUESTION_SIMILARITY_THRESHOLD", "0.90")
+    os.getenv("ALS_QUESTION_SIMILARITY_THRESHOLD", "0.95")
 )
 REQUIRE_PERCEIVER_CONTEXT = _env_bool("ALS_REQUIRE_PERCEIVER_CONTEXT", True)
 ENABLE_FOCUS_CROP = _env_bool("ALS_ENABLE_FOCUS_CROP", True)
@@ -86,6 +88,10 @@ MAX_CROP_COORDINATE_COVERAGE = min(1.0, max(0.5, float(
     os.getenv("ALS_MAX_CROP_COORDINATE_COVERAGE", "0.94")
 )))
 
+_RUNTIME_CATALOG = runtime_catalog()
+_QA_LANG = _RUNTIME_CATALOG.language
+_CUSTOM_TAXONOMY = _RUNTIME_CATALOG.custom
+
 MODEL_ROUTE: Dict[str, Tuple[str, str]] = {
     "gpt-5-mini": (
         os.getenv("LOCAL_REASONER_BASE_URL", "http://127.0.0.1:8001/v1"),
@@ -107,24 +113,32 @@ _THINK_RE = re.compile(r"<thinking>\s*([\s\S]*?)\s*</thinking>", re.IGNORECASE)
 _QUESTION_RE = re.compile(r"<question>\s*([\s\S]*?)\s*</question>", re.IGNORECASE)
 _FINAL_RE = re.compile(r"\[Final Answer\]\s*:\s*(.+)", re.IGNORECASE)
 _COORD_TERMS_RE = re.compile(
-    r"\b(coordinate|coordinates|bbox|bounding box|box_2d|hbb|obb|corner|corners|"
-    r"polygon|position|location|extent|envelope|locali[sz])\b",
-    re.IGNORECASE,
-)
-_FOCUS_ROI_RE = re.compile(
-    r"(?:focus\s+region|roi)[^\[\n]{0,80}\[\s*-?\d+(?:\.\d+)?"
-    r"(?:\s*,\s*-?\d+(?:\.\d+)?){3}\s*\]",
+    r"(?:"
+    r"\b(?:coordinate|coordinates|bbox|bounding box|box_2d|hbb|obb|corner|corners|"
+    r"polygon|position|location|extent|envelope|locali[sz])\b"
+    r"|坐标|角点|四角点|四个角点|顺时针|旋转框|边界框|外接矩形|定位框|包围框"
+    r")",
     re.IGNORECASE,
 )
 _NUM_PATTERN = r"-?\d+(?:\.\d+)?"
+_ROI_PREFIX = (
+    r"(?:focus\s+region|roi|粗略搜索区域|搜索区域|目标区域|候选区域|"
+    r"坐标范围|区域|范围)"
+)
+_FOCUS_ROI_RE = re.compile(
+    rf"{_ROI_PREFIX}[^\[\n]{{0,160}}\[\s*-?\d+(?:\.\d+)?"
+    rf"(?:\s*,\s*-?\d+(?:\.\d+)?){3}\s*\]",
+    re.IGNORECASE,
+)
 _FOCUS_ROI_CAPTURE_RE = re.compile(
-    rf"(?:focus\s+region|roi)[^\[\n]{{0,80}}"
+    rf"{_ROI_PREFIX}[^\[\n]{{0,160}}"
     rf"\[\s*({_NUM_PATTERN})\s*,\s*({_NUM_PATTERN})\s*,\s*"
     rf"({_NUM_PATTERN})\s*,\s*({_NUM_PATTERN})\s*\]",
     re.IGNORECASE,
 )
 _QUESTION_ROI_RE = re.compile(
-    rf"(?:region|roi|bbox|box|coordinates?)[^\[\n]{{0,100}}"
+    rf"(?:region|roi|bbox|box|coordinates?|粗略搜索区域|搜索区域|目标区域|"
+    rf"候选区域|区域|范围|坐标)[^\[\n]{{0,160}}"
     rf"\[\s*({_NUM_PATTERN})\s*,\s*({_NUM_PATTERN})\s*,\s*"
     rf"({_NUM_PATTERN})\s*,\s*({_NUM_PATTERN})\s*\]",
     re.IGNORECASE,
@@ -144,7 +158,7 @@ _STRICT_OBB_RESPONSE_RE = re.compile(
     re.IGNORECASE,
 )
 _PIPE_OBB_RESPONSE_RE = re.compile(
-    rf"[a-zA-Z][a-zA-Z_ -]*\|\s*({_NUM_PATTERN})"
+    rf"[^\n|]{{1,200}}\|\s*({_NUM_PATTERN})"
     rf"(?:\s*,\s*{_NUM_PATTERN}){{7}}",
     re.IGNORECASE,
 )
@@ -177,42 +191,28 @@ _QUESTION_STOPWORDS = {
     "with",
 }
 _CLASS_LEADING_TERMS = (
-    "plane",
-    "aircraft",
-    "airplane",
-    "ship",
-    "boat",
-    "vessel",
-    "storage tank",
-    "baseball diamond",
-    "baseball field",
-    "tennis court",
-    "basketball court",
-    "ground track field",
-    "running track",
-    "harbor",
-    "marina",
-    "bridge",
-    "large vehicle",
-    "truck",
-    "bus",
-    "small vehicle",
-    "car",
-    "helicopter",
-    "roundabout",
-    "soccer ball field",
-    "soccer field",
-    "football field",
-    "swimming pool",
+    tuple(_RUNTIME_CATALOG.labels)
+    if _CUSTOM_TAXONOMY
+    else (
+        "plane", "aircraft", "airplane", "ship", "boat", "vessel",
+        "storage tank", "baseball diamond", "baseball field",
+        "tennis court", "basketball court", "ground track field",
+        "running track", "harbor", "marina", "bridge",
+        "large vehicle", "truck", "bus", "small vehicle", "car",
+        "helicopter", "roundabout", "soccer ball field", "soccer field",
+        "football field", "swimming pool",
+    )
 )
 
 
 def _canonicalize_reasoner_response(text: str) -> tuple[str, bool]:
-    """Normalize harmless tag variants without changing semantic content."""
+    """Normalize harmless complete tag variants without inventing content."""
     original = str(text or "").strip()
     out = original.replace("```xml", "").replace("```", "").strip()
     out = re.sub(r"<\s*think\s*>", "<thinking>", out, flags=re.IGNORECASE)
     out = re.sub(r"<\s*/\s*think\s*>", "</thinking>", out, flags=re.IGNORECASE)
+    out = re.sub(r"<\s*ques(?:tion)?\s*>", "<question>", out, flags=re.IGNORECASE)
+    out = re.sub(r"<\s*/\s*ques(?:tion)?\s*>", "</question>", out, flags=re.IGNORECASE)
     out = re.sub(
         r"\[\s*Question\s*\]\s*:\s*([\s\S]+)$",
         lambda match: f"<question>{match.group(1).strip()}</question>",
@@ -239,12 +239,45 @@ def _canonicalize_reasoner_response(text: str) -> tuple[str, bool]:
     return out, out != original
 
 
+def _looks_incomplete_response(text: str) -> bool:
+    """Detect visibly cut-off model text even when finish_reason is not length."""
+    raw = str(text or "").strip()
+    if not raw:
+        return True
+    low = raw.casefold().rstrip()
+    suspicious_suffixes = (
+        "let’s look at the im",
+        "let's look at the im",
+        "</que",
+        "</ques",
+        "<question",
+        "</thin",
+        "</think",
+        "<thinking",
+    )
+    if low.endswith(suspicious_suffixes):
+        return True
+    # An opening structural tag without its closing tag is not a complete response.
+    if re.search(r"<thinking>", raw, re.IGNORECASE) and not re.search(
+        r"</thinking>", raw, re.IGNORECASE
+    ):
+        return True
+    if re.search(r"<question>", raw, re.IGNORECASE) and not re.search(
+        r"</question>", raw, re.IGNORECASE
+    ):
+        return True
+    return False
+
+
 def _write_log(record: Dict[str, Any]) -> None:
     if not API_LOG_PATH:
         return
     payload = {
         "timestamp": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
         "thread": threading.get_ident(),
+        "qa_language": _QA_LANG,
+        "taxonomy_mode": "custom" if _CUSTOM_TAXONOMY else "dota",
+        "taxonomy_sha256": _RUNTIME_CATALOG.sha256,
         **record,
     }
     path = Path(API_LOG_PATH)
@@ -379,18 +412,36 @@ def _current_reasoner_context() -> str:
 
 
 def _is_classification_context(context: str) -> bool:
-    low = context.lower()
+    text = str(context or "")
+    low = re.sub(r"\s+", " ", text.casefold())
+    markers = (
+        "[task=ref_classification]",
+        "which canonical dota category",
+        "which canonical category",
+        "return only the canonical class name",
+        "return only the exact canonical class name",
+        "choose exactly one label from",
+        "请从以下标准类别中选择且只选择一个",
+        "只返回 classes.txt 中的完整标准类别名",
+        "只返回classes.txt中的完整标准类别名",
+        "只返回标准类别名",
+    )
+    return any(marker in low for marker in markers)
+
+
+def _is_grounding_context(context: str) -> bool:
+    text = str(context or "")
+    low = re.sub(r"\s+", " ", text.casefold())
     return (
-        "which canonical dota category" in low
-        or "return only the canonical class name" in low
-        or "choose exactly one label from" in low
+        "[task=ref_grounding_obb]" in low
+        or "class_name|x1,y1,x2,y2,x3,y3,x4,y4" in low
+        or "只返回一行：class_name|x1,y1,x2,y2,x3,y3,x4,y4" in text
     )
 
 
 def _normalized_question_tokens(question: str) -> list[str]:
     return [
-        token
-        for token in _QUESTION_TOKEN_RE.findall(str(question or "").lower())
+        token for token in multilingual_tokens(question)
         if token not in _QUESTION_STOPWORDS
     ]
 
@@ -431,13 +482,13 @@ def _duplicate_question(
 
 
 def _classification_question_is_leading(question: str) -> bool:
-    low = re.sub(r"\s+", " ", str(question or "").lower()).strip()
+    low = re.sub(r"\s+", " ", str(question or "").casefold()).strip()
     if re.search(
-        r"\b(?:canonical\s+dota\s+)?(?:category|class|label)\b",
+        r"\b(?:canonical\s+dota\s+)?(?:category|class|label|brand|model)\b",
         low,
-    ):
+    ) or any(term in low for term in ("类别", "分类", "标签", "品牌", "型号")):
         return True
-    return any(re.search(rf"\b{re.escape(term)}s?\b", low) for term in _CLASS_LEADING_TERMS)
+    return any(contains_term(low, term) for term in _CLASS_LEADING_TERMS)
 
 
 def _extract_focus_roi(context: str) -> Optional[Tuple[float, float, float, float]]:
@@ -696,19 +747,21 @@ def _unrelated_question_roi(
 
 
 def _coordinate_answer_kind(question: str) -> str:
-    """Return ``bbox``, ``obb``, ``either`` or ``none`` for an atomic question."""
-    low = re.sub(r"\s+", " ", str(question or "").lower())
+    """Return ``bbox``, ``obb``, ``either`` or ``none`` for a bilingual question."""
+    low = re.sub(r"\s+", " ", str(question or "").casefold())
     if not _COORD_TERMS_RE.search(low):
         return "none"
     if re.search(
-        r"\b(?:obb(?:_8)?|rotated\s+(?:box|bounding\s+box)|polygon|"
-        r"four\s+corners?|clockwise)\b",
+        r"(?:\b(?:obb(?:_8)?|rotated\s+(?:box|bounding\s+box)|polygon|"
+        r"four\s+corners?|clockwise)\b|旋转框|四个角点|四角点|顺时针|"
+        r"obb坐标|obb角点)",
         low,
     ):
         return "obb"
     if re.search(
-        r"\b(?:bbox(?:_2d)?|box_2d|bounding\s+box|coarse\s+(?:box|hbb)|"
-        r"axis[- ]aligned|envelope|top[- ]left.*bottom[- ]right)\b",
+        r"(?:\b(?:bbox(?:_2d)?|box_2d|bounding\s+box|coarse\s+(?:box|hbb)|"
+        r"axis[- ]aligned|envelope|top[- ]left.*bottom[- ]right)\b|"
+        r"水平框|外接矩形|左上角.*右下角|粗略框)",
         low,
     ):
         return "bbox"
@@ -785,6 +838,8 @@ def _perceiver_response_status(
     text = re.sub(r"\s+", " ", str(response or "")).strip()
     if not text:
         return False, "empty_perceiver_response"
+    if _looks_incomplete_response(response):
+        return False, "incomplete_perceiver_response"
     if any(term in text.lower() for term in (
         "apiconnectionerror", "connection refused", "service unavailable", "traceback"
     )):
@@ -805,7 +860,8 @@ def _perceiver_response_status(
             and _classification_response_reveals_class(response)
         ):
             return False, "classification_perceiver_reveals_class_or_alias"
-        if len(text.split()) < 4:
+        evidence_units = multilingual_tokens(text)
+        if len(evidence_units) < 4:
             return False, "classification_evidence_too_short"
         return True, "ok"
     return _perceiver_coordinate_status(response, coordinate_kind)
@@ -827,6 +883,11 @@ def _is_structured_task(query: str) -> bool:
         "canonical dota",
         "return exactly one line",
         "return only one class name",
+        "只返回一行",
+        "四个角点",
+        "顺时针",
+        "完整标准类别名",
+        "标准类别",
     )
     return any(marker in low for marker in markers)
 
@@ -850,13 +911,21 @@ def _has_pathological_repetition(text: str) -> bool:
 
 
 def _coordinate_question_is_unsafe(question: str) -> Optional[str]:
-    low = re.sub(r"\s+", " ", str(question or "").lower())
-    if re.search(r"\b(top[- ]left|top[- ]right|bottom[- ]left|bottom[- ]right) corner\b", low):
-        if not re.search(r"four corners|all four|complete.*(?:obb|box)", low):
-            return "partial_corner_coordinate_question"
-    if re.search(r"\bare (?:the )?(?:four )?corners?.*\d", low):
+    low = re.sub(r"\s+", " ", str(question or "").casefold())
+    asks_single_corner = bool(re.search(
+        r"(?:\b(?:top[- ]left|top[- ]right|bottom[- ]left|bottom[- ]right) corner\b|"
+        r"左上角|右上角|右下角|左下角)",
+        low,
+    ))
+    asks_complete_obb = bool(re.search(
+        r"(?:four corners|all four|complete.*(?:obb|box)|四个角点|四角点|完整.*(?:obb|旋转框)|顺时针.*角点)",
+        low,
+    ))
+    if asks_single_corner and not asks_complete_obb:
+        return "partial_corner_coordinate_question"
+    if re.search(r"(?:\bare (?:the )?(?:four )?corners?.*\d|这些角点是否|坐标是否为|是否是.*\d)", low):
         return "proposed_coordinates_for_confirmation"
-    if re.search(r"orientation angle.*degrees", low):
+    if re.search(r"(?:orientation angle.*degrees|方向角.*度|倾斜角.*度)", low):
         return "numeric_angle_instead_of_direct_visual_geometry"
     return None
 
@@ -877,27 +946,8 @@ def _compact_reasoner_query(query: str, original_context: str, max_chars: int) -
 
 
 def _canonical_class_name(value: str) -> Optional[str]:
-    low = re.sub(r"[_-]+", " ", str(value or "").strip().lower())
-    low = re.sub(r"\s+", " ", low)
-    aliases = {
-        "aircraft": "plane", "airplane": "plane", "jet": "plane",
-        "boat": "ship", "vessel": "ship",
-        "marina": "harbor", "port": "harbor",
-        "traffic circle": "roundabout",
-        "truck": "large vehicle", "bus": "large vehicle", "trailer": "large vehicle", "lorry": "large vehicle",
-        "car": "small vehicle", "sedan": "small vehicle", "suv": "small vehicle", "pickup": "small vehicle",
-        "baseball field": "baseball diamond", "running track": "ground track field",
-        "soccer field": "soccer ball field", "football field": "soccer ball field",
-        "pool": "swimming pool",
-    }
-    low = aliases.get(low, low)
-    canonical = {
-        "plane", "ship", "storage tank", "baseball diamond", "tennis court",
-        "basketball court", "ground track field", "harbor", "bridge",
-        "large vehicle", "small vehicle", "helicopter", "roundabout",
-        "soccer ball field", "swimming pool",
-    }
-    return low if low in canonical else None
+    return _RUNTIME_CATALOG.canonicalize(value)
+
 
 
 def _parse_structured_answer(value: str) -> Tuple[Optional[str], Optional[List[float]]]:
@@ -934,7 +984,7 @@ def _deterministic_verifier_response(prompt: str) -> Optional[str]:
     pred_class, pred_coords = _parse_structured_answer(answer_text)
     gt_class, gt_coords = _parse_structured_answer(gt_text)
     if pred_class is None or gt_class is None:
-        return "REJECT: answer is not a valid canonical DOTA label or structured grounding output"
+        return "REJECT: answer is not a valid active canonical label or structured grounding output"
     if pred_class != gt_class:
         return "REJECT: canonical class mismatch"
     classification = _is_classification_context(query) or gt_coords is None
@@ -966,6 +1016,8 @@ def _reasoner_format_status(
     valid_perception_rounds: int = 0,
     valid_coordinate_rounds: int = 0,
 ) -> Tuple[bool, str]:
+    if _looks_incomplete_response(text):
+        return False, "incomplete_reasoner_response"
     thinking = _THINK_RE.search(text or "")
     questions = _QUESTION_RE.findall(text or "")
     final = _FINAL_RE.search(text or "")
@@ -1015,33 +1067,43 @@ def _reasoner_format_status(
 
 def _coordinate_instruction(images: Optional[List[Tuple[Image.Image, str]]]) -> str:
     target = COORDINATE_TARGET.lower()
+    zh = _QA_LANG == "zh"
     if target == "norm1000_obb":
         return (
-            "Use normalized image coordinates in [0,1000], with (0,0) at the top-left "
-            "and (1000,1000) at the bottom-right. If asked for a coarse box, return "
-            "bbox_2d=[xmin,ymin,xmax,ymax]. If asked for a rotated box, return "
-            "obb_8=[x1,y1,x2,y2,x3,y3,x4,y4] in clockwise order."
+            "使用 [0,1000] 归一化图像坐标，左上角为 (0,0)，右下角为 (1000,1000)。粗框返回 bbox_2d=[xmin,ymin,xmax,ymax]；旋转框返回顺时针 obb_8=[x1,y1,x2,y2,x3,y3,x4,y4]。"
+            if zh else
+            "Use normalized image coordinates in [0,1000], with (0,0) at the top-left and (1000,1000) at the bottom-right. For a coarse box return bbox_2d=[xmin,ymin,xmax,ymax]. For a rotated box return clockwise obb_8=[x1,y1,x2,y2,x3,y3,x4,y4]."
         )
     if target == "norm100_obb":
-        return (
-            "Use normalized image coordinates in [0,100], with top-left origin. "
-            "Return the requested bbox_2d or clockwise obb_8 structure only."
-        )
+        return ("使用 [0,100] 归一化坐标，左上角为原点，只返回所需 bbox_2d 或顺时针 obb_8。" if zh else "Use normalized image coordinates in [0,100], with top-left origin. Return only the requested bbox_2d or clockwise obb_8.")
     if target == "pixel_obb":
         size = ""
         if images:
             width, height = images[0][0].size
-            size = f" The image size is {width}x{height} pixels."
-        return (
-            "Use original-image pixel coordinates with top-left origin." + size +
-            " Return the requested bbox_2d or clockwise obb_8 structure only."
-        )
+            size = (f" 图像尺寸为 {width}×{height} 像素。" if zh else f" The image size is {width}x{height} pixels.")
+        return (("使用原始图像像素坐标，左上角为原点。" + size + "只返回所需 bbox_2d 或顺时针 obb_8。") if zh else ("Use original-image pixel coordinates with top-left origin." + size + " Return only the requested bbox_2d or clockwise obb_8."))
     if target == "norm1000_hbb":
-        return (
-            "Use normalized image coordinates in [0,1000], with top-left origin, and return "
-            "bbox_2d=[xmin,ymin,xmax,ymax]."
-        )
-    return "Follow the coordinate convention from the original task exactly."
+        return ("使用 [0,1000] 归一化坐标，左上角为原点，返回 bbox_2d=[xmin,ymin,xmax,ymax]。" if zh else "Use normalized image coordinates in [0,1000], with top-left origin, and return bbox_2d=[xmin,ymin,xmax,ymax].")
+    return ("严格遵守原始任务中的坐标约定。" if zh else "Follow the coordinate convention from the original task exactly.")
+
+
+
+def _redact_classification_candidates(text: str) -> str:
+    """Hide the label list from the Perceiver while preserving target identity."""
+    out = str(text or "")
+    out = re.sub(
+        r"请从以下标准类别中选择且只选择一个[:：][\s\S]*?(?=必须根据图像证据判断|只返回\s*classes\.txt|只返回classes\.txt)",
+        "分类候选类别列表已对视觉感知模型隐藏。",
+        out,
+        flags=re.IGNORECASE,
+    )
+    out = re.sub(
+        r"(?:choose|select) exactly one (?:canonical )?label from[:：][\s\S]*?(?=use visual evidence|return only|respond only)",
+        "The classification candidate list is hidden from the perception model. ",
+        out,
+        flags=re.IGNORECASE,
+    )
+    return out
 
 
 def _redact_roi_coordinates(text: str) -> str:
@@ -1109,6 +1171,9 @@ def _augment_perceiver_query(
 
     display_context = context
     display_query = str(query or "").rstrip()
+    if classification_task:
+        display_context = _redact_classification_candidates(display_context)
+        display_query = _redact_classification_candidates(display_query)
     if coordinate_kind != "none" and crop_meta is not None:
         display_context = _redact_roi_coordinates(display_context)
         display_query = _redact_roi_coordinates(display_query)
@@ -1193,16 +1258,26 @@ def _augment_perceiver_query(
 
 
 def _final_turn_instruction(round_index: int) -> str:
+    if _QA_LANG == "zh":
+        return f"""
+
+# 强制最终轮
+这是 Reasoner 第 {round_index}/{MAX_LOOP} 轮，也是最后允许轮次。
+不要再输出 <question>。使用已有证据，遵守原问题坐标制和精确答案格式，只输出：
+<thinking>简短证据总结与格式检查</thinking>
+[Final Answer]: <原问题要求的直接答案>
+最终答案后不得添加文字。
+""".rstrip()
     return f"""
 
 # Mandatory final-turn override
 This is Reasoner round {round_index}/{MAX_LOOP}, the final allowed round.
-Do not output another <question>. Use the evidence already collected and obey the
-original query's coordinate convention and exact answer format. Output exactly:
+Do not output another <question>. Use the evidence already collected and obey the original query's coordinate convention and exact answer format. Output exactly:
 <thinking>brief evidence summary and final format check</thinking>
 [Final Answer]: <direct answer required by the original query>
 Do not add any text after the final answer.
 """.rstrip()
+
 
 
 def _repair_instruction(
@@ -1228,7 +1303,7 @@ def _repair_instruction(
     if classification_task:
         task_rules = """
 If asking a question, it must be class-neutral:
-- do not use any DOTA category name, class label, synonym or subtype;
+- do not use any active canonical category name or class label;
 - do not ask what class/category/label the target is;
 - do not offer candidates, comparisons, or yes/no guesses such as
   "is it a bridge?" or "vehicle versus storage tank?";
@@ -1277,6 +1352,16 @@ These restrictions apply to <question> content, not to a final answer.
         reason_rules = (
             "Do not finalize. Ask for one complete tight clockwise OBB of the exact "
             "target in a single coordinate question; do not ask separate corners."
+        )
+    elif reason == "partial_corner_coordinate_question":
+        reason_rules = (
+            "Never ask for one corner. Ask once for all four distinct non-collinear "
+            "clockwise OBB corners and require only an obb_8 response."
+        )
+    elif reason == "incomplete_reasoner_response":
+        reason_rules = (
+            "Regenerate a complete response with fully closed structural tags. "
+            "Do not end at a partial word or partial XML tag."
         )
     compact_query = _compact_reasoner_query(query, original_context, 5200)
     invalid_excerpt = "(omitted because the response was truncated)" if reason == "finish_reason=length" else invalid_response[:700]
@@ -1355,7 +1440,7 @@ Invalid-response excerpt: {invalid_excerpt}
 
 {' '.join(rules)}
 Do not repeat the original task, do not switch targets, and do not add a
-self-dialogue or final DOTA answer.
+self-dialogue or final task answer.
 """.strip()
 
 
@@ -1364,6 +1449,18 @@ def _safe_perceiver_failure_response(
     coordinate_kind: str,
     classification_task: bool,
 ) -> str:
+    if _QA_LANG == "zh":
+        if coordinate_kind != "none":
+            return (
+                "前一坐标响应无效，不能作为证据。下一轮必须重新请求放大ROI中"
+                "精确目标的完整紧致顺时针OBB，并只接受obb_8结构。"
+            )
+        if classification_task:
+            return (
+                "前一视觉观察不够可靠或不够类别中性。下一轮请询问精确目标的"
+                "另一个直接可见属性，且不得说出候选类别。"
+            )
+        return "前一视觉观察不可靠。请针对同一精确目标询问一个更具体、尚未问过的视觉事实。"
     if coordinate_kind != "none":
         return (
             "The coordinate estimate was invalid and must not be used. Ask again "
@@ -1382,15 +1479,15 @@ def _safe_perceiver_failure_response(
 
 
 def _question_dimension(question: str) -> str:
-    low = re.sub(r"\s+", " ", str(question or "").lower())
+    low = re.sub(r"\s+", " ", str(question or "").casefold())
     dimensions = (
-        ("shape", ("shape", "outline", "geometry", "boundary", "form")),
-        ("parts", ("part", "wing", "tail", "deck", "roof", "island", "support")),
-        ("orientation", ("orient", "direction", "axis", "horizontal", "vertical", "diagonal")),
-        ("scale", ("size", "scale", "length", "width", "relative", "larger", "smaller")),
-        ("surface", ("surface", "texture", "color", "material", "reflective")),
-        ("markings", ("marking", "line", "stripe", "lane", "goal", "net")),
-        ("context", ("surround", "adjacent", "beneath", "support", "road", "water", "paved")),
+        ("shape", ("shape", "outline", "geometry", "boundary", "form", "形状", "轮廓", "边界", "几何")),
+        ("parts", ("part", "wing", "tail", "deck", "roof", "support", "部件", "结构", "机翼", "尾部")),
+        ("orientation", ("orient", "direction", "axis", "horizontal", "vertical", "diagonal", "方向", "朝向", "长轴", "水平", "垂直", "倾斜")),
+        ("scale", ("size", "scale", "length", "width", "relative", "larger", "smaller", "大小", "尺度", "长度", "宽度")),
+        ("surface", ("surface", "texture", "color", "material", "reflective", "表面", "纹理", "颜色", "材质")),
+        ("markings", ("marking", "line", "stripe", "lane", "goal", "net", "标记", "线条", "条纹", "分区")),
+        ("context", ("surround", "adjacent", "beneath", "support", "road", "water", "paved", "周围", "相邻", "下方", "道路", "水面", "铺装")),
     )
     for name, terms in dimensions:
         if any(term in low for term in terms):
@@ -1398,45 +1495,104 @@ def _question_dimension(question: str) -> str:
     return "other"
 
 
+def _choose_unasked_question(
+    candidates: List[str], previous_questions: List[str]
+) -> Optional[str]:
+    for candidate in candidates:
+        repeated, _, _ = _duplicate_question(candidate, previous_questions)
+        if not repeated:
+            return candidate
+    return None
+
+
 def _safe_reasoner_fallback(
     previous_questions: List[str],
     classification_task: bool,
     reason: str,
-) -> str:
-    """Return one deterministic, format-valid recovery question.
+) -> Optional[str]:
+    """Use a bounded bank of non-repeating recovery questions.
 
-    This is used only after all model repair attempts fail.  It prevents a
-    known duplicate or class-leading question from entering the saved trace.
-    It never fabricates a final answer.
+    Returning ``None`` after exhaustion prevents the adapter from injecting the
+    same generic question indefinitely. The official loop will then preserve the
+    last rejected response and the run will fail closed rather than fabricate
+    additional evidence.
     """
+    coordinate_recovery = reason == "final_before_valid_coordinate_evidence" or any(
+        marker in str(reason or "")
+        for marker in (
+            "coordinate", "obb", "bbox", "corner", "角点", "坐标",
+            "partial_corner", "invalid_perceiver",
+        )
+    )
+    if _QA_LANG == "zh":
+        if classification_task:
+            candidates = [
+                "精确目标直接可见的整体轮廓和二维几何形状是什么？",
+                "精确目标的前部、中部和后部在轮廓上如何分段？",
+                "精确目标顶部是否存在与主体明显不同的设备或承载结构？",
+                "精确目标相对于紧邻承载表面的大小和长宽比例如何？",
+                "精确目标内部可见哪些标记、分区或重复图案？",
+                "精确目标的表面纹理及其与背景的边界对比如何？",
+                "精确目标在图像中的主轴方向是什么？",
+            ]
+        elif coordinate_recovery:
+            candidates = [
+                "放大ROI中精确目标的四个不同顺时针OBB角点是什么？只返回obb_8=[x1,y1,x2,y2,x3,y3,x4,y4]。",
+                "忽略粗略搜索框和裁剪边缘，沿精确目标真实外轮廓重新估计完整紧致OBB；只返回obb_8=[x1,y1,x2,y2,x3,y3,x4,y4]。",
+                "请重新独立估计精确目标的四个物理角点；四点不得重复、共线、自交或覆盖整个ROI，只返回obb_8结构。",
+                "以放大ROI左上角为(0,0)、右下角为(1000,1000)，给出精确目标完整顺时针OBB；不要逐角回答。",
+                "仅检查精确目标本体，不要使用道路、阴影或ROI边缘；返回紧贴目标的四点顺时针obb_8。",
+                "重新观察目标四条实际边界的交点并一次性返回完整obb_8，禁止返回单个角点或自然语言解释。",
+            ]
+        else:
+            candidates = [
+                "精确目标最显著且独立于背景的二维轮廓特征是什么？",
+                "精确目标可见哪些与周围对象不同的结构部件？",
+                "精确目标的主轴方向和完整车体宽度如何？",
+                "精确目标与紧邻道路、地面或其他对象之间的边界在哪里？",
+            ]
+        question = _choose_unasked_question(candidates, previous_questions)
+        if question is None:
+            return None
+        return (
+            "<thinking>前一响应在有限修复后仍不合法。保持同一目标，并从有限恢复问题中选择一个尚未问过的问题。</thinking>\n"
+            f"<question>{question}</question>"
+        )
+
     if classification_task:
-        used = {_question_dimension(value) for value in previous_questions}
         candidates = [
-            ("shape", "What is the target's visible outline and overall geometry?"),
-            ("parts", "Which distinct structural parts are directly visible on the target?"),
-            ("scale", "How large is the target relative to its immediate supporting surface?"),
-            ("markings", "What internal markings, divisions, or repeated patterns are visible on the target?"),
-            ("surface", "What surface texture and boundary contrast are visible on the target?"),
-            ("context", "What immediate surface or structure directly supports the target?"),
-            ("orientation", "What is the target's principal orientation in the image?"),
+            "What is the exact target's visible outline and two-dimensional geometry?",
+            "How do the front, middle, and rear portions of the exact target differ in outline?",
+            "Which distinct structural part is directly visible on top of the exact target?",
+            "What are the target's relative size and length-to-width proportion?",
+            "Which internal markings, divisions, or repeated patterns are visible?",
+            "What surface texture and target-background boundary contrast are visible?",
+            "What is the exact target's principal axis orientation?",
         ]
-        question = next((q for dim, q in candidates if dim not in used), candidates[-1][1])
-    elif reason == "final_before_valid_coordinate_evidence":
-        question = (
-            "What are the four distinct clockwise OBB corners of the exact target "
-            "in the enlarged ROI coordinate frame?"
-        )
+    elif coordinate_recovery:
+        candidates = [
+            "What are the four distinct clockwise OBB corners of the exact target in the enlarged ROI? Return only obb_8=[x1,y1,x2,y2,x3,y3,x4,y4].",
+            "Ignore the coarse search box and crop edges; re-estimate one complete tight clockwise OBB on the actual target silhouette and return only obb_8.",
+            "Independently re-estimate all four physical target corners; do not repeat points, return a line, cross edges, or cover the full ROI. Return only obb_8.",
+            "Using the enlarged ROI coordinate frame, return the complete tight clockwise target OBB in one response; never answer one corner at a time.",
+            "Inspect only the exact target body, not roads, shadows, or ROI edges, and return four tight clockwise OBB corners.",
+            "Re-observe the intersections of the four actual target boundaries and return one complete obb_8 without prose.",
+        ]
     else:
-        question = (
-            "What single visible boundary or structural feature most precisely "
-            "separates the exact target from its surroundings?"
-        )
+        candidates = [
+            "What two-dimensional outline most clearly separates the exact target from the background?",
+            "Which visible structural part distinguishes the exact target from nearby objects?",
+            "What are the target's principal orientation and complete body width?",
+            "Where is the visible boundary between the exact target and the adjacent surface?",
+        ]
+    question = _choose_unasked_question(candidates, previous_questions)
+    if question is None:
+        return None
     return (
-        "<thinking>The previous response remained invalid after bounded repair, "
-        "so I will request one new non-leading visual fact without changing the "
-        "target.</thinking>\n"
+        "<thinking>The prior response remained invalid after bounded repair. I will keep the same target and use one unasked question from a finite recovery bank.</thinking>\n"
         f"<question>{question}</question>"
     )
+
 
 
 class APIModel:
@@ -1887,6 +2043,13 @@ class APIModel:
             fallback = _safe_reasoner_fallback(
                 previous_questions, classification_task, repair_reason
             )
+            if fallback is None:
+                _write_log({
+                    "event": "reasoner_fallback_bank_exhausted",
+                    "role": self.role,
+                    "round": round_index,
+                    "reason": repair_reason,
+                })
         _write_log(
             {
                 "event": "reasoner_format_unrepaired",

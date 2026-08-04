@@ -13,19 +13,24 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "main_layer"))
-from common import DOTA_CLASSES, discover_images, load_settings, polygon_area, read_jsonl, settings_from_cli, write_json  # noqa: E402
+from common import (  # noqa: E402
+    CUSTOM_TAXONOMY, DOTA_CLASSES, QA_LANGUAGE, TAXONOMY_SHA256,
+    discover_images, load_settings, polygon_area, read_jsonl, settings_from_cli, write_json,
+)
+from main_layer.taxonomy import contains_term  # noqa: E402
+from data_layer.qa_i18n import has_focus_phrase  # noqa: E402
 from data_layer.ref_semantics import resolve_reference_matches  # noqa: E402
 
 UNNATURAL_CLASS_RE = re.compile(r"\b(?:at the (?:top|bottom|far left|far right) of its class|of its class)\b", re.I)
 ORIENTATION_RE = re.compile(r"\b(?:roughly horizontal|roughly vertical|diagonally ascending to the right|diagonally descending to the right)\b", re.I)
-NO_ORIENTATION_CLASSES = {"storage tank", "roundabout", "harbor"}
+NO_ORIENTATION_CLASSES = set() if CUSTOM_TAXONOMY else {"storage tank", "roundabout", "harbor"}
 
 ORDINAL_RE = re.compile(r"\b(?:\d+(?:st|nd|rd|th)|first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth)\b", re.I)
 COORD_RE = re.compile(r"(?:\[|\()\s*-?\d+(?:\.\d+)?\s*[, ]+\s*-?\d+(?:\.\d+)?")
 NUMBER_RE = re.compile(r"-?\d+(?:\.\d+)?")
 AREA_AREA_RE = re.compile(r"\barea\s+area\b", re.I)
 EXPECTED_SCHEMA = "dota_ref_v4_3_3"
-TARGET_ALIASES = {
+TARGET_ALIASES = ({label: (label,) for label in DOTA_CLASSES} if CUSTOM_TAXONOMY else {
     "plane": ("plane", "airplane", "aircraft", "jet"),
     "ship": ("ship", "boat", "vessel", "watercraft"),
     "storage tank": ("storage tank", "tank"),
@@ -41,7 +46,7 @@ TARGET_ALIASES = {
     "roundabout": ("roundabout", "traffic circle"),
     "soccer ball field": ("soccer ball field", "soccer field", "football field"),
     "swimming pool": ("swimming pool", "pool"),
-}
+})
 
 
 def _points_in_pixel_bounds(points, width: int, height: int) -> bool:
@@ -96,8 +101,8 @@ def _question_has_exact_focus(row: dict, field: str) -> bool:
     if not _flat_in_range(focus, 4, 1000.0):
         return False
     expected = "[" + ",".join(str(int(round(float(value)))) for value in focus) + "]"
-    text = re.sub(r"\s+", " ", str(row.get(field) or "")).lower()
-    return "focus region" in text and expected in text.replace(" ", "")
+    text = re.sub(r"\s+", " ", str(row.get(field) or ""))
+    return has_focus_phrase(text, QA_LANGUAGE) and expected in text.replace(" ", "")
 
 
 def _answer_valid(row: dict) -> bool:
@@ -119,9 +124,8 @@ def _answer_valid(row: dict) -> bool:
 
 
 def _contains_target_alias(text: str, class_name: str) -> bool:
-    low = str(text or "").lower()
     return any(
-        re.search(rf"\b{re.escape(alias)}s?\b", low)
+        contains_term(text, alias)
         for alias in TARGET_ALIASES.get(class_name, (class_name,))
         if alias
     )
@@ -154,10 +158,17 @@ def _validate_rows(
     for row in rows:
         image = str(row.get("image_path", ""))
         width, height = int(row.get("image_width", 0)), int(row.get("image_height", 0))
-        canonical = str(row.get("class_name", "")).lower()
+        canonical = str(row.get("class_name", ""))
         classes[canonical or "unknown"] += 1
         if row.get("schema_version") != EXPECTED_SCHEMA:
             stats["schema_version_mismatch"] += 1
+        if CUSTOM_TAXONOMY:
+            if row.get("qa_language") != QA_LANGUAGE:
+                stats["qa_language_mismatch"] += 1
+            if row.get("taxonomy_sha256") != TAXONOMY_SHA256:
+                stats["taxonomy_sha256_mismatch"] += 1
+            if canonical not in DOTA_CLASSES:
+                stats["unknown_class_name"] += 1
 
         if not Path(image).is_file():
             stats["missing_images"] += 1
@@ -191,7 +202,7 @@ def _validate_rows(
                 stats["duplicated_area_word"] += 1
             if canonical in NO_ORIENTATION_CLASSES and (ORIENTATION_RE.search(ground) or ORIENTATION_RE.search(class_ref)):
                 stats["unstable_orientation_phrase"] += 1
-            if canonical and re.search(rf"\b{re.escape(canonical)}\b", class_ref.lower()):
+            if canonical and contains_term(class_ref, canonical):
                 stats["classification_label_leak"] += 1
             if canonical and _contains_target_alias(class_ref, canonical):
                 stats["classification_alias_leak"] += 1
@@ -289,7 +300,14 @@ def main() -> int:
     args = ap.parse_args()
     settings = load_settings(settings_from_cli(__file__, args.settings))
     root = Path(settings["paths"]["dota128_ref_root"])
-    report = {"schema_version": "dota_ref_v4_3_3", "splits": {}, "critical": [], "warnings": []}
+    report = {
+        "schema_version": "dota_ref_v4_3_3",
+        "taxonomy_mode": "custom" if CUSTOM_TAXONOMY else "dota",
+        "qa_language": QA_LANGUAGE,
+        "taxonomy_sha256": TAXONOMY_SHA256,
+        "num_classes": len(DOTA_CLASSES),
+        "splits": {}, "critical": [], "warnings": [],
+    }
     split_scene_ids: dict[str, set[str]] = {}
     split_object_classes: dict[str, set[str]] = {}
 
@@ -351,6 +369,9 @@ def main() -> int:
             "norm1000_out_of_range",
             "hbb_norm1000_out_of_range",
             "schema_version_mismatch",
+            "qa_language_mismatch",
+            "taxonomy_sha256_mismatch",
+            "unknown_class_name",
         }
         for key in fatal_keys:
             value = all_stats.get(key, 0)

@@ -1,0 +1,26 @@
+{
+  "name": "v1.2.0_2A6000_custom_zh_stable_patch",
+  "version": "1.2.0",
+  "base": "2A6000 / ssh1.2.2.2 stable flow",
+  "language_policy": {
+    "english": "unchanged original settings and output paths",
+    "chinese": "isolated user-selected output root"
+  },
+  "invariants": {
+    "question_similarity_threshold": 0.95,
+    "increase_max_loop": false,
+    "increase_max_tokens_without_finish_reason_length": false,
+    "lower_debug_thresholds": false,
+    "full_before_debug_pass": false
+  },
+  "fixes": [
+    "Chinese ROI extraction",
+    "Chinese coordinate intent",
+    "Chinese task detection",
+    "Unicode duplicate-question detection",
+    "finite non-repeating recovery bank",
+    "classification label-list redaction from Perceiver",
+    "independent Chinese settings/output root",
+    "B0 evaluation and D1 Direct-only baseline workflow"
+  ]
+}

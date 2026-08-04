@@ -11,6 +11,7 @@ from difflib import SequenceMatcher
 from typing import Any, Iterable
 
 from main_layer.common import (
+    CUSTOM_TAXONOMY,
     extract_final_text,
     hbb_from_points,
     hbb_iou,
@@ -18,6 +19,9 @@ from main_layer.common import (
     normalize_class_name,
     parse_obb_output,
 )
+from main_layer.taxonomy import contains_term, multilingual_tokens, runtime_catalog
+
+_RUNTIME_CATALOG = runtime_catalog()
 
 _NUMBER_RE = re.compile(r"-?\d+(?:\.\d+)?")
 _BBOX_RE = re.compile(
@@ -119,6 +123,14 @@ _QUESTION_STOPWORDS = {
     "which",
     "with",
 }
+
+
+if CUSTOM_TAXONOMY:
+    # Flat custom labels: no guessed hierarchy, subtype aliases or DOTA scene ontology.
+    CLASS_EVIDENCE = {label: (label,) for label in _RUNTIME_CATALOG.labels}
+    CLASS_CLAIM_TERMS = {label: (label,) for label in _RUNTIME_CATALOG.labels}
+    SCENE_REGION_TERMS = ()
+    SCENE_COMPATIBLE_BY_CLASS = {}
 
 
 def coordinate_parse_mode(target: str | None) -> str:
@@ -488,8 +500,7 @@ def _last_evidence_text(loop: dict[str, Any], turns: int = 2) -> str:
 
 def _question_tokens(question: str) -> list[str]:
     return [
-        token
-        for token in _QUESTION_TOKEN_RE.findall(str(question or "").lower())
+        token for token in multilingual_tokens(question)
         if token not in _QUESTION_STOPWORDS
     ]
 
@@ -553,38 +564,33 @@ def _classification_leading_questions(
     questions: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     terms = sorted(
-        {
-            term
-            for values in CLASS_CLAIM_TERMS.values()
-            for term in values
-        },
-        key=len,
-        reverse=True,
+        {term for values in CLASS_CLAIM_TERMS.values() for term in values},
+        key=len, reverse=True,
     )
     bad: list[dict[str, Any]] = []
     for row in questions:
-        low = row["question"].lower()
+        low = row["question"].casefold()
         generic = bool(
-            re.search(
-                r"\b(?:canonical\s+dota\s+)?(?:category|class|label)\b",
-                low,
-            )
+            re.search(r"\b(?:canonical\s+dota\s+)?(?:category|class|label|brand|model)\b", low)
+            or any(term in low for term in ("类别", "分类", "标签", "品牌", "型号"))
         )
-        revealed = any(
-            re.search(rf"\b{re.escape(term)}s?\b", low)
-            for term in terms
-        )
+        revealed = any(contains_term(low, term) for term in terms)
         if generic or revealed:
             bad.append(row)
     return bad
+
 
 
 def _target_denials(perception_texts: list[str], target: str) -> list[str]:
     aliases = CLASS_CLAIM_TERMS.get(target, (target,))
     denied: list[str] = []
     for text in perception_texts:
-        low = text.lower()
+        low = text.casefold()
+        found = False
         for alias in aliases:
+            if any(phrase in low for phrase in (f"不是{alias}", f"并非{alias}", f"没有{alias}", f"未见{alias}")):
+                found = True
+                break
             patterns = (
                 rf"\bno\s+(?:such\s+|clear\s+)?{re.escape(alias)}s?\b",
                 rf"\bnot\s+(?:an?\s+|the\s+)?{re.escape(alias)}\b",
@@ -592,41 +598,33 @@ def _target_denials(perception_texts: list[str], target: str) -> list[str]:
                 rf"\b(?:does|do)\s+not\s+(?:appear|look|seem)[^.!?]{{0,35}}\b{re.escape(alias)}\b",
             )
             if any(re.search(pattern, low) for pattern in patterns):
-                denied.append(text)
+                found = True
                 break
+        if found:
+            denied.append(text)
     return denied
+
 
 
 def _strong_class_claims(perception_texts: list[str]) -> dict[str, list[str]]:
     claims: dict[str, list[str]] = {}
-    subject = (
-        r"(?:\btarget\b|\bobject\b|\bstructure\b|\bfeature\b|\bit\b)"
-    )
-    attribution = (
-        subject
-        + r"[^.!?]{0,100}?"
-        + r"(?:\bis\b|\bare\b|\bappears?\s+to\s+be\b|\blooks?\s+like\b|"
-        r"\bseems?\s+to\s+be\b|\bidentified\s+as\b|\bclassified\s+as\b|"
-        r"\b(?:could\s+be\s+)?interpreted\s+as\b|"
-        r"\b(?:appears?|seems?)\s+consistent\s+with\b|"
-        r"\b(?:appears?|seems?)\s+to\s+fit\s+(?:the\s+)?description\s+of\b|"
-        r"\bfits?\s+(?:the\s+)?description\s+of\b|"
-        r"\bis\s+indicative\s+of\b)"
-        r"\s+(?:an?\s+|the\s+)?"
-    )
     for text in perception_texts:
-        low = text.lower()
+        low = text.casefold()
         for class_name, aliases in CLASS_CLAIM_TERMS.items():
             for alias in aliases:
-                for match in re.finditer(attribution + rf"{re.escape(alias)}s?\b", low):
-                    prefix = low[max(0, match.start() - 25) : match.start()]
-                    if re.search(r"\b(?:no|not|without|isn['’]?t|aren['’]?t)\b", prefix):
-                        continue
-                    claims.setdefault(class_name, []).append(text)
-                    break
-                if class_name in claims and text in claims[class_name]:
-                    break
+                if CUSTOM_TAXONOMY:
+                    if contains_term(low, alias) and any(verb in low for verb in ("是", "属于", "判断为", "识别为", "看起来像", "appears to be", "identified as", "classified as", "is a", "is an")):
+                        if not any(neg in low for neg in (f"不是{alias}", f"并非{alias}", "not ", "no ")):
+                            claims.setdefault(class_name, []).append(text)
+                            break
+                else:
+                    subject = r"(?:\btarget\b|\bobject\b|\bstructure\b|\bfeature\b|\bit\b)"
+                    attribution = subject + r"[^.!?]{0,100}?(?:\bis\b|\bare\b|\bappears?\s+to\s+be\b|\blooks?\s+like\b|\bseems?\s+to\s+be\b|\bidentified\s+as\b|\bclassified\s+as\b)\s+(?:an?\s+|the\s+)?"
+                    if re.search(attribution + rf"{re.escape(alias)}s?\b", low):
+                        claims.setdefault(class_name, []).append(text)
+                        break
     return claims
+
 
 
 def _scene_substitutions(
@@ -700,11 +698,13 @@ def audit_trace_semantics(
         rf"doesn['’]?t\s+appear\s+to\s+be\s+(?:an?\s+)?{re.escape(target_text)}",
         rf"does\s+not\s+appear\s+to\s+be\s+(?:an?\s+)?{re.escape(target_text)}",
     )
-    if any(re.search(pattern, last) for pattern in negative_patterns):
+    if any(re.search(pattern, last) for pattern in negative_patterns) or any(
+        phrase in last for phrase in (f"不是{target_text}", f"并非{target_text}", f"没有{target_text}")
+    ):
         reasons.append("late_target_denial")
 
     evidence_terms = CLASS_EVIDENCE.get(target or "", (target or "",))
-    explicit_target_term = any(term and term in full_perception for term in evidence_terms)
+    explicit_target_term = any(term and contains_term(full_perception, term) for term in evidence_terms)
     perception_texts = [
         str(turn.get("P_response") or "").strip()
         for turn in history
@@ -734,7 +734,7 @@ def audit_trace_semantics(
     if not positive:
         reasons.append("missing_usable_perceiver_evidence")
 
-    if target in {"large vehicle", "small vehicle"}:
+    if not CUSTOM_TAXONOMY and target in {"large vehicle", "small vehicle"}:
         vehicle_terms = ("vehicle", "truck", "bus", "car", "sedan", "trailer", "van")
         if ("building" in last or "warehouse" in last) and not any(term in last for term in vehicle_terms):
             reasons.append("late_building_vehicle_contradiction")

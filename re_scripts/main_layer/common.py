@@ -17,28 +17,20 @@ try:  # OpenCV is preferred but the core geometry has a pure NumPy fallback.
 except ImportError:  # pragma: no cover - exercised in minimal CPU environments
     cv2 = None
 
-DOTA_CLASSES = [
-    "plane", "ship", "storage tank", "baseball diamond", "tennis court",
-    "basketball court", "ground track field", "harbor", "bridge",
-    "large vehicle", "small vehicle", "helicopter", "roundabout",
-    "soccer ball field", "swimming pool",
-]
+try:
+    from .taxonomy import runtime_catalog
+except ImportError:  # imported as top-level ``common`` by existing scripts
+    from taxonomy import runtime_catalog  # type: ignore
+
+_RUNTIME_CATALOG = runtime_catalog()
+DOTA_CLASSES = list(_RUNTIME_CATALOG.labels)
+ALIASES = dict(_RUNTIME_CATALOG.aliases)
+CUSTOM_TAXONOMY = bool(_RUNTIME_CATALOG.custom)
+QA_LANGUAGE = _RUNTIME_CATALOG.language
+TAXONOMY_SHA256 = _RUNTIME_CATALOG.sha256
+CLASSES_FILE = _RUNTIME_CATALOG.classes_file
+
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff", ".webp"}
-ALIASES = {
-    "storage-tank": "storage tank", "baseball-diamond": "baseball diamond",
-    "tennis-court": "tennis court", "basketball-court": "basketball court",
-    "ground-track-field": "ground track field", "large-vehicle": "large vehicle",
-    "small-vehicle": "small vehicle", "soccer-ball-field": "soccer ball field",
-    "swimming-pool": "swimming pool",
-    # Natural visual subtypes used by generic VLMs.
-    "bus": "large vehicle", "truck": "large vehicle", "lorry": "large vehicle",
-    "trailer": "large vehicle", "truck trailer": "large vehicle",
-    "tractor trailer": "large vehicle", "heavy vehicle": "large vehicle",
-    "car": "small vehicle", "sedan": "small vehicle", "suv": "small vehicle",
-    "pickup": "small vehicle", "pickup truck": "small vehicle", "compact van": "small vehicle",
-    "airplane": "plane", "aircraft": "plane", "jet": "plane",
-    "boat": "ship", "vessel": "ship",
-}
 
 
 def load_settings(path: str | Path) -> dict[str, Any]:
@@ -95,12 +87,13 @@ def stable_id(*parts: Any) -> str:
 
 
 def normalize_class_name(text: str | None) -> str | None:
-    name = str(text or "").strip().lower().replace("_", " ")
-    name = re.sub(r"\s+", " ", name).strip(" .,:;[](){}\"'")
-    name = ALIASES.get(name, name)
-    name = name.replace("-", " ")
-    name = ALIASES.get(name, name)
-    return name if name in DOTA_CLASSES else None
+    """Return the exact canonical spelling from the active taxonomy.
+
+    Custom mode intentionally has no guessed hierarchy or subtype mapping.
+    Chinese, English and mixed labels are accepted exactly as listed in
+    ``classes.txt`` (with Unicode/case/whitespace normalization only for lookup).
+    """
+    return _RUNTIME_CATALOG.canonicalize(text)
 
 
 def polygon_area(points: Iterable[Iterable[float]]) -> float:

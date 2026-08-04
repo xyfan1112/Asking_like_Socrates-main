@@ -29,6 +29,9 @@ def build_record(item: Dict[str, Any]) -> Dict[str, Any]:
         "image_root": {"rgb": str(image_path.parent)},
         "data_source": str(item.get("data_source", "DOTA128-Ref")),
         "task": str(item.get("task", "ref_grounding_obb")),
+        "lang": str(item.get("qa_language") or item.get("lang") or "en"),
+        "qa_language": str(item.get("qa_language") or item.get("lang") or "en"),
+        "taxonomy_sha256": str(item.get("taxonomy_sha256") or ""),
     }
 
 
@@ -101,7 +104,8 @@ def main() -> None:
         "output": str(output_path),
         "records": len(records),
         "schema_fields": list(records[0].keys()),
-        "official_expected_fields": ["id", "query", "gt", "image", "image_root", "data_source", "task"],
+        "official_expected_fields": ["id", "query", "gt", "image", "image_root", "data_source", "task", "lang", "qa_language", "taxonomy_sha256"],
+        "qa_languages": sorted({str(row.get("qa_language") or row.get("lang") or "") for row in rows}),
     }
     report_path = output_path.with_suffix(".report.json")
     report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")

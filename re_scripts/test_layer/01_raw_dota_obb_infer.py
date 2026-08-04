@@ -15,10 +15,12 @@ from typing import Any
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "main_layer"))
 sys.path.insert(0, str(ROOT / "test_layer"))
 from common import (  # noqa: E402
     DOTA_CLASSES,
+    QA_LANGUAGE,
     append_jsonl,
     discover_images,
     image_data_url,
@@ -28,6 +30,7 @@ from common import (  # noqa: E402
     settings_from_cli,
     split_center_rois,
 )
+from data_layer.qa_i18n import direct_detection_question  # noqa: E402
 from eval_common import chat_once, check_server, protocol, write_manifest  # noqa: E402
 
 
@@ -54,26 +57,32 @@ def class_question(
     mode: str,
     roi_pixel: list[float],
 ) -> str:
-    convention = "normalized coordinates in [0,1000] relative to the original image" if mode == "normalized_0_1000" else "original-image pixel coordinates"
     roi = _roi_in_mode(roi_pixel, width, height, mode)
     roi_text = ",".join(f"{value:.2f}".rstrip("0").rstrip(".") for value in roi)
-    return (
-        f"Image size: {width}x{height}. Detect every {class_name} object whose center lies inside "
-        f"ROI [{roi_text}]. Use {convention}; answer coordinates remain relative to the full image. "
-        "Output one class_name|confidence|x1,y1,x2,y2,x3,y3,x4,y4 line per object, "
-        "with four corners in clockwise order, between FINAL_DETECTIONS and END_DETECTIONS. "
-        "If none exists, output an empty FINAL_DETECTIONS block. Keep any reasoning brief "
-        "so the complete final block is always produced."
+    target = "norm1000_obb" if mode == "normalized_0_1000" else "pixel_obb"
+    return direct_detection_question(
+        width=width, height=height, class_name=class_name, roi_text=roi_text,
+        coordinate_target=target, lang=QA_LANGUAGE,
     )
+
 
 
 def all_class_question(width: int, height: int, mode: str) -> str:
+    labels = "、".join(f"“{x}”" for x in DOTA_CLASSES) if QA_LANGUAGE == "zh" else ", ".join(DOTA_CLASSES)
+    if QA_LANGUAGE == "zh":
+        convention = "相对于原始图像的 [0,1000] 归一化坐标" if mode == "normalized_0_1000" else "原始图像像素坐标"
+        return (
+            f"图像尺寸：{width}×{height}。检测所有目标，只能使用以下标准类别：{labels}。"
+            f"使用{convention}。在 FINAL_DETECTIONS 与 END_DETECTIONS 之间，"
+            "每个目标输出一行 class_name|confidence|x1,y1,x2,y2,x3,y3,x4,y4。"
+        )
     convention = "normalized coordinates in [0,1000] relative to the original image" if mode == "normalized_0_1000" else "original-image pixel coordinates"
     return (
-        f"Image size: {width}x{height}. Detect all DOTA objects. Use only these classes: {', '.join(DOTA_CLASSES)}. "
+        f"Image size: {width}x{height}. Detect all target objects. Use only these canonical classes: {labels}. "
         f"Use {convention}. Output one class_name|confidence|x1,y1,x2,y2,x3,y3,x4,y4 line per object "
         "between FINAL_DETECTIONS and END_DETECTIONS."
     )
+
 
 
 def load_canonical_gt(settings: dict, split: str) -> list[dict[str, Any]]:
