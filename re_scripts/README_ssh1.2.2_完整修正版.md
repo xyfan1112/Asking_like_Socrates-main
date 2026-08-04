@@ -8,7 +8,7 @@
 
 CFG=/home/yk/Asking_like_Socrates-main/re_scripts/settings.json 
 
-python main_layer/run.py split-scenes   --settings settings.json   --output-root /home/yk/fxy/datasets/dota128_scene_disjoint   --settings-output /home/yk/Asking_like_Socrates-main/re_scripts/settings.scene_disjoint.json
+python main_layer/run.py split-scenes   --settings settings.json   --output-root /home/yk/fxy/datasets/yw128_scene_disjoint   --settings-output /home/yk/Asking_like_Socrates-main/re_scripts/settings.scene_disjoint.json
 
 ## 3.生成QA
 CFG=/home/yk/Asking_like_Socrates-main/re_scripts/settings.scene_disjoint.json
@@ -75,7 +75,38 @@ python main_layer/run.py official-socratic-full \
   --settings "$CFG" \
   train full 40 fresh
 
-```
+python main_layer/run.py stop-agents --settings "$CFG"
+python main_layer/run.py validate-train --settings "$CFG"
+python main_layer/run.py train-b1 --settings "$CFG"
+python main_layer/run.py train-b2 --settings "$CFG"
+python main_layer/run.py merge --settings "$CFG" both
+python main_layer/run.py start-eval --settings "$CFG" rs_eot 1 8010
+python main_layer/run.py test-matrix \
+  --settings "$CFG" \
+  rs_eot http://127.0.0.1:8010/v1 fresh
+
+
+
+python main_layer/run.py stop-eval --settings "$CFG" rs_eot 8010
+python main_layer/run.py start-eval --settings "$CFG" rs_eot_b1_direct 1 8010
+python main_layer/run.py test-matrix \
+  --settings "$CFG" \
+  rs_eot_b1_direct http://127.0.0.1:8010/v1 fresh
+python main_layer/run.py stop-eval --settings "$CFG" rs_eot_b1_direct 8010
+python main_layer/run.py start-eval --settings "$CFG" rs_eot_b2_socratic 1 8010
+python main_layer/run.py test-matrix \
+  --settings "$CFG" \
+  rs_eot_b2_socratic http://127.0.0.1:8010/v1 fresh
+python main_layer/run.py stop-eval --settings "$CFG" rs_eot_b2_socratic 8010
+
+python main_layer/run.py compare-b0-b1-b2 --settings "$CFG"
+
+
+
+
+
+
+
 
 
 
