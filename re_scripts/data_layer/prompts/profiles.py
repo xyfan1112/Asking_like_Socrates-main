@@ -1,4 +1,4 @@
-"""Prompt overlays for the stable custom-classes Socratic pipeline v1.2.0.
+"""Prompt overlays for the stable custom-classes Socratic pipeline v1.2.1.
 
 The active canonical labels are loaded at runtime from ``classes.txt`` when
 ``--classes-file`` is supplied.  Custom mode deliberately has no guessed alias,
@@ -21,7 +21,7 @@ _LANG = _CATALOG.language
 def _zh_profile() -> Dict[str, str]:
     return {
         "reasoner": f"""
-[自定义 OBB 证据推理扩展 v1.2.0]
+[自定义 OBB 证据推理扩展 v1.2.1]
 当前 classes.txt 的标准类别为：{_LABELS_TEXT_ZH}。
 类别之间没有预设层级、父子关系或别名映射。最终类别必须逐字使用 classes.txt 中的标准写法。
 除固定结构标签、坐标结构和 classes.txt 中的类别原文外，所有自然语言推理与提问必须使用中文。
@@ -39,7 +39,7 @@ def _zh_profile() -> Dict[str, str]:
 8. 最终回答严格遵守原问题格式；启用 GT teacher forcing 时，智能体只生成轨迹，最终 GT 由程序写入。
 """.strip(),
         "perceiver": f"""
-[自定义 OBB 视觉感知扩展 v1.2.0]
+[自定义 OBB 视觉感知扩展 v1.2.1]
 分类候选类别列表不会提供给 Perceiver；只能根据图像描述直接可见证据。
 只使用中文回答当前一个原子视觉问题，最多三句简短中文；坐标问题只返回一个坐标结构。禁止输出“Let's look at the image”或其他开场白。
 Classification 证据轮不得直接输出、比较或猜测任何标准类别，只描述直接可见属性。
@@ -51,7 +51,7 @@ obb_8=[x1,y1,x2,y2,x3,y3,x4,y4]
 禁止只返回单个角点、自然语言坐标描述或重复点；禁止把粗略 ROI 四边当成精确目标 OBB。
 """.strip(),
         "verifier": f"""
-[自定义 OBB 验证扩展 v1.2.0]
+[自定义 OBB 验证扩展 v1.2.1]
 标准类别为：{_LABELS_TEXT_ZH}。
 类别没有预设层级或别名；最终类别必须与 classes.txt 中一个标准类别完全一致。除固定结构标签和类别原文外，验证理由使用中文。
 检查轨迹是否始终指向同一目标、正确区域和一致视觉证据。Classification 中间问题若泄漏、比较或猜测类别，应拒绝。Grounding 若目标错误、区域错误、类别错误、四边形非法、复制整个 ROI 或缺少坐标证据，应拒绝。
@@ -63,7 +63,7 @@ obb_8=[x1,y1,x2,y2,x3,y3,x4,y4]
 def _en_profile() -> Dict[str, str]:
     return {
         "reasoner": f"""
-[Custom OBB evidence-reasoning extension v1.2.0]
+[Custom OBB evidence-reasoning extension v1.2.1]
 The active canonical labels from classes.txt are: {_LABELS_TEXT_EN}.
 There is no assumed hierarchy, parent-child relation, subtype mapping or alias mapping. The final class must preserve the exact canonical spelling from classes.txt.
 Every response must begin with exactly one <thinking>...</thinking> block, followed by exactly one <question>...</question> or one [Final Answer]: line. Keep all structural tags unchanged.
@@ -80,7 +80,7 @@ Rules:
 8. The final answer must follow the original exact format. With GT teacher forcing, agents generate only the trajectory and the program supplies the final GT.
 """.strip(),
         "perceiver": f"""
-[Custom OBB perception extension v1.2.0]
+[Custom OBB perception extension v1.2.1]
 The classification candidate list is intentionally hidden from the Perceiver. Describe only evidence visible in the images.
 Answer only the current atomic visual question in at most three concise sentences, or one coordinate structure for a coordinate request. Never begin with “Let's look at the image”.
 For classification evidence, never output, compare or guess a canonical label; describe only directly visible attributes.
@@ -92,7 +92,7 @@ An elongated target must still have a closed two-dimensional outline and visible
 Never return one corner, prose-only coordinates, duplicate points, or the coarse ROI boundary as the precise target OBB.
 """.strip(),
         "verifier": f"""
-[Custom OBB verifier extension v1.2.0]
+[Custom OBB verifier extension v1.2.1]
 The canonical labels are: {_LABELS_TEXT_EN}.
 There is no assumed hierarchy or alias mapping. The final class must exactly match one label from classes.txt.
 Reject target drift, wrong region, wrong class, class-leading classification questions, invalid quadrilaterals, full-ROI copies, or missing coordinate evidence. With GT teacher forcing, approximate trajectory coordinates need not numerically equal GT, but they must remain tied to the correct target and plausible geometry.

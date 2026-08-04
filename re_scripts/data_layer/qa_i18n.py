@@ -282,6 +282,90 @@ def direct_detection_question(
     )
 
 
+
+def direct_all_objects_json_question(
+    *,
+    width: int,
+    height: int,
+    coordinate_target: str,
+    lang: str,
+    output_kind: str,
+) -> str:
+    """Render deterministic full-image all-object Direct QA.
+
+    ``output_kind`` is either ``obb`` or ``hbb``.  Class labels are never
+    translated; they remain the exact strings from classes.txt.
+    """
+    lang = normalize_lang(lang)
+    if output_kind not in {"obb", "hbb"}:
+        raise ValueError(f"unsupported output_kind: {output_kind}")
+    if output_kind == "obb":
+        convention = coordinate_instruction(coordinate_target, width, height, lang)
+        if lang == "zh":
+            return (
+                f"图像尺寸：{width}×{height}。请定位图中全部标注目标，不遗漏、不重复。"
+                f"使用{convention}。只输出一个合法JSON对象，格式为："
+                '{"objects":[{"category":"classes.txt中的完整类别名",'
+                '"obb_8":[x1,y1,x2,y2,x3,y3,x4,y4]}]}。'
+                "四个角点按顺时针排列；不得输出Markdown、解释或额外文字。"
+            )
+        return (
+            f"Image size: {width}x{height}. Locate every annotated target object in "
+            f"the full image without omission or duplication. Use {convention}. "
+            "Return only one valid JSON object in this schema: "
+            '{"objects":[{"category":"exact label from classes.txt",'
+            '"obb_8":[x1,y1,x2,y2,x3,y3,x4,y4]}]}. '
+            "Corners must be clockwise. Do not output Markdown or explanation."
+        )
+
+    if lang == "zh":
+        return (
+            f"图像尺寸：{width}×{height}。请定位图中全部标注目标，不遗漏、不重复。"
+            "bbox_2d使用相对于完整原图的[0,1000]归一化坐标[x1,y1,x2,y2]。"
+            "只输出一个合法JSON对象，格式为："
+            '{"bbox_2d":[[x1,y1,x2,y2]],"categories":["classes.txt中的完整类别名"]}。'
+            "两个数组必须严格等长且索引一一对应；不得输出Markdown、解释或额外文字。"
+        )
+    return (
+        f"Image size: {width}x{height}. Locate every annotated target object in the "
+        "full image without omission or duplication. bbox_2d uses normalized "
+        "[0,1000] full-image coordinates [x1,y1,x2,y2]. Return only one valid JSON "
+        'object: {"bbox_2d":[[x1,y1,x2,y2]],"categories":["exact label from classes.txt"]}. '
+        "The two arrays must have equal lengths and matching indices. No Markdown or explanation."
+    )
+
+
+def direct_single_ref_json_question(
+    *,
+    width: int,
+    height: int,
+    focus_text: str,
+    reference: str,
+    coordinate_target: str,
+    lang: str,
+) -> str:
+    """Render one-target final-only Direct/Ref-style JSON OBB supervision."""
+    lang = normalize_lang(lang)
+    convention = coordinate_instruction(coordinate_target, width, height, lang)
+    if lang == "zh":
+        return (
+            f"图像尺寸：{width}×{height}。目标位于粗略搜索区域[{focus_text}]内，"
+            f"指代描述为：{reference}。粗略区域只用于搜索，不能直接作为目标边界。"
+            f"请定位这个单一目标并使用{convention}。只输出一个合法JSON对象："
+            '{"category":"classes.txt中的完整类别名",'
+            '"obb_8":[x1,y1,x2,y2,x3,y3,x4,y4]}。'
+            "四点按顺时针排列；不得逐个询问角点，不得输出解释。"
+        )
+    return (
+        f"Image size: {width}x{height}. The single target is inside coarse focus region "
+        f"[{focus_text}] and is described as {reference}. The coarse region is only a "
+        f"search hint and must not be copied as the target boundary. Use {convention}. "
+        "Return only one valid JSON object: "
+        '{"category":"exact label from classes.txt",'
+        '"obb_8":[x1,y1,x2,y2,x3,y3,x4,y4]}. '
+        "Use clockwise corners; do not output explanation."
+    )
+
 def has_focus_phrase(text: str, lang: str) -> bool:
     low = re.sub(r"\s+", " ", str(text or "")).casefold()
     if normalize_lang(lang) == "zh":

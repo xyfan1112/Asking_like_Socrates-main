@@ -29,7 +29,11 @@ from common import (  # noqa: E402
     write_json,
     write_jsonl,
 )
-from data_layer.qa_i18n import direct_detection_question  # noqa: E402
+from data_layer.qa_i18n import (  # noqa: E402
+    direct_all_objects_json_question,
+    direct_detection_question,
+    direct_single_ref_json_question,
+)
 
 
 def _answer_for(row: dict[str, Any], target: str) -> str:
@@ -88,7 +92,7 @@ def _roi_to_target(roi: list[float], width: int, height: int, target: str) -> li
     ]
 
 
-def _direct_samples(
+def _direct_samples_legacy(
     all_rows: list[dict[str, Any]],
     target: str,
     max_objects: int,
@@ -167,6 +171,7 @@ def _direct_samples(
                             "taxonomy_sha256": TAXONOMY_SHA256,
                             "class_name": cls,
                             "coordinate_target": target,
+                            "direct_qa_mode": "legacy_class_roi_obb",
                             "chunk_index": chunk_idx,
                             "objects_in_chunk": len(chunk),
                             "negative_sample": bool(is_negative),
@@ -181,6 +186,229 @@ def _direct_samples(
     return samples
 
 
+def _points_for_target(row: dict[str, Any], target: str) -> list[list[float]]:
+    if target not in {"pixel_obb", "norm100_obb", "norm1000_obb"}:
+        raise ValueError(
+            f"JSON OBB Direct mode requires an OBB coordinate target, got {target!r}"
+        )
+    return {
+        "pixel_obb": row["obb_pixel"],
+        "norm100_obb": row["obb_norm100"],
+        "norm1000_obb": row["obb_norm1000"],
+    }[target]
+
+
+def _flat_ints(points: list[list[float]]) -> list[int]:
+    return [int(round(float(value))) for point in points for value in point]
+
+
+def _hbb_norm1000(row: dict[str, Any]) -> list[int]:
+    hbb = row.get("hbb_norm1000")
+    if not isinstance(hbb, list) or len(hbb) != 4:
+        points = row.get("obb_norm1000") or []
+        xs = [float(point[0]) for point in points]
+        ys = [float(point[1]) for point in points]
+        if len(xs) != 4 or len(ys) != 4:
+            raise ValueError(f"row {row.get('id')} has no valid norm1000 OBB/HBB")
+        hbb = [min(xs), min(ys), max(xs), max(ys)]
+    return [int(round(float(value))) for value in hbb]
+
+
+def _direct_samples_all_image_json(
+    all_rows: list[dict[str, Any]],
+    target: str,
+    *,
+    output_kind: str,
+    max_objects_per_image: int,
+) -> list[dict[str, Any]]:
+    by_image: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in all_rows:
+        by_image[row["image_path"]].append(row)
+    samples: list[dict[str, Any]] = []
+    for image_path, image_rows in sorted(by_image.items()):
+        image_rows = sorted(
+            image_rows,
+            key=lambda row: (
+                float(row["center_pixel"][1]),
+                float(row["center_pixel"][0]),
+                str(row["class_name"]),
+                int(row.get("object_index", 0)),
+            ),
+        )
+        if len(image_rows) > max_objects_per_image:
+            raise RuntimeError(
+                f"{image_path} has {len(image_rows)} objects, exceeding "
+                f"direct_json_max_objects_per_image={max_objects_per_image}. "
+                "This mode promises all objects and therefore refuses silent truncation."
+            )
+        width = int(image_rows[0]["image_width"])
+        height = int(image_rows[0]["image_height"])
+        if output_kind == "obb":
+            payload = {
+                "objects": [
+                    {
+                        "category": str(row["class_name"]),
+                        "obb_8": _flat_ints(_points_for_target(row, target)),
+                    }
+                    for row in image_rows
+                ]
+            }
+            task = "detection_all_objects_json_obb"
+            mode = "all_image_json_obb"
+            coordinate_target = target
+        elif output_kind == "hbb":
+            payload = {
+                "bbox_2d": [_hbb_norm1000(row) for row in image_rows],
+                "categories": [str(row["class_name"]) for row in image_rows],
+            }
+            task = "detection_all_objects_json_hbb"
+            mode = "all_image_json_hbb"
+            coordinate_target = "norm1000_hbb"
+        else:
+            raise ValueError(output_kind)
+        question = direct_all_objects_json_question(
+            width=width,
+            height=height,
+            coordinate_target=coordinate_target,
+            lang=QA_LANGUAGE,
+            output_kind=output_kind,
+        )
+        answer = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+        sample_id = stable_id(
+            image_path,
+            mode,
+            coordinate_target,
+            QA_LANGUAGE,
+            TAXONOMY_SHA256,
+        )
+        samples.append(
+            {
+                "messages": [
+                    {"role": "user", "content": f"<image>\n{question}"},
+                    {"role": "assistant", "content": "</think>\n" + answer},
+                ],
+                "images": [image_path],
+                "metadata": {
+                    "task": task,
+                    "direct_qa_mode": mode,
+                    "sample_id": sample_id,
+                    "qa_language": QA_LANGUAGE,
+                    "taxonomy_mode": "custom" if CUSTOM_TAXONOMY else "dota",
+                    "taxonomy_sha256": TAXONOMY_SHA256,
+                    "coordinate_target": coordinate_target,
+                    "objects_in_sample": len(image_rows),
+                    "source_ref_ids": [str(row["id"]) for row in image_rows],
+                    "image_width": width,
+                    "image_height": height,
+                },
+            }
+        )
+    return samples
+
+
+def _format_roi(values: list[float]) -> str:
+    return ",".join(str(int(round(float(value)))) for value in values)
+
+
+def _direct_samples_single_ref_json(
+    refs: list[dict[str, Any]],
+    target: str,
+) -> list[dict[str, Any]]:
+    samples: list[dict[str, Any]] = []
+    for row in sorted(refs, key=lambda item: str(item["id"])):
+        focus = row.get("classification_focus_hbb_norm1000") or row.get("hbb_norm1000")
+        if not isinstance(focus, list) or len(focus) != 4:
+            raise ValueError(f"ref row {row.get('id')} lacks a valid focus HBB")
+        width = int(row["image_width"])
+        height = int(row["image_height"])
+        question = direct_single_ref_json_question(
+            width=width,
+            height=height,
+            focus_text=_format_roi(focus),
+            reference=str(row.get("reference_grounding") or "the referenced target"),
+            coordinate_target=target,
+            lang=QA_LANGUAGE,
+        )
+        payload = {
+            "category": str(row["class_name"]),
+            "obb_8": _flat_ints(_points_for_target(row, target)),
+        }
+        answer = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+        mode = "single_ref_json_obb"
+        sample_id = stable_id(
+            str(row["id"]), mode, target, QA_LANGUAGE, TAXONOMY_SHA256
+        )
+        samples.append(
+            {
+                "messages": [
+                    {"role": "user", "content": f"<image>\n{question}"},
+                    {"role": "assistant", "content": "</think>\n" + answer},
+                ],
+                "images": [row["image_path"]],
+                "metadata": {
+                    "task": "single_ref_json_obb",
+                    "direct_qa_mode": mode,
+                    "sample_id": sample_id,
+                    "qa_language": QA_LANGUAGE,
+                    "taxonomy_mode": "custom" if CUSTOM_TAXONOMY else "dota",
+                    "taxonomy_sha256": TAXONOMY_SHA256,
+                    "coordinate_target": target,
+                    "objects_in_sample": 1,
+                    "source_ref_ids": [str(row["id"])],
+                    "class_name": str(row["class_name"]),
+                    "image_width": width,
+                    "image_height": height,
+                },
+            }
+        )
+    return samples
+
+
+def _build_direct_samples(
+    *,
+    mode: str,
+    refs: list[dict[str, Any]],
+    all_rows: list[dict[str, Any]],
+    target: str,
+    max_objects: int,
+    negative_classes_per_image: int,
+    seed: int,
+    json_max_objects_per_image: int,
+) -> list[dict[str, Any]]:
+    if mode == "legacy_class_roi_obb":
+        rows = _direct_samples_legacy(
+            all_rows,
+            target,
+            max_objects,
+            negative_classes_per_image,
+            seed,
+        )
+        for row in rows:
+            row.setdefault("metadata", {})["direct_qa_mode"] = mode
+        return rows
+    if mode == "all_image_json_obb":
+        return _direct_samples_all_image_json(
+            all_rows,
+            target,
+            output_kind="obb",
+            max_objects_per_image=json_max_objects_per_image,
+        )
+    if mode == "all_image_json_hbb":
+        return _direct_samples_all_image_json(
+            all_rows,
+            target,
+            output_kind="hbb",
+            max_objects_per_image=json_max_objects_per_image,
+        )
+    if mode == "single_ref_json_obb":
+        return _direct_samples_single_ref_json(refs, target)
+    raise ValueError(
+        f"unsupported data_conversion.direct_qa_mode={mode!r}; expected one of "
+        "legacy_class_roi_obb, all_image_json_obb, all_image_json_hbb, "
+        "single_ref_json_obb"
+    )
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--settings")
@@ -191,6 +419,8 @@ def main() -> None:
     seed = int(settings["project"]["seed"])
     cfg = settings["data_conversion"]
     target = cfg.get("coordinate_target", "norm1000_obb")
+    direct_mode = str(cfg.get("direct_qa_mode", "legacy_class_roi_obb"))
+    json_max_objects = int(cfg.get("direct_json_max_objects_per_image", 200))
     ref_root = Path(settings["paths"]["dota128_ref_root"])
     work = Path(settings["paths"]["pipeline_work_root"]) / "agent_inputs"
     work.mkdir(parents=True, exist_ok=True)
@@ -212,6 +442,8 @@ def main() -> None:
         "taxonomy_mode": "custom" if CUSTOM_TAXONOMY else "dota",
         "taxonomy_sha256": TAXONOMY_SHA256,
         "num_classes": len(DOTA_CLASSES),
+        "direct_qa_mode": direct_mode,
+        "direct_json_max_objects_per_image": json_max_objects,
         "validation_report": str(validation_path),
         "validation_passed": bool(validation.get("passed", False)),
         "forced": bool(args.force),
@@ -298,12 +530,15 @@ def main() -> None:
         agent_path = work / f"{split}_agent_inputs.jsonl"
         direct_path = work / f"{split}_direct.json"
         write_jsonl(agent_path, agent_rows)
-        direct = _direct_samples(
-            all_rows,
-            target,
-            int(cfg.get("max_objects_per_direct_sample", 40)),
-            int(cfg.get("direct_negative_classes_per_image", 2)),
-            seed + (0 if split == "train" else 10000),
+        direct = _build_direct_samples(
+            mode=direct_mode,
+            refs=refs,
+            all_rows=all_rows,
+            target=target,
+            max_objects=int(cfg.get("max_objects_per_direct_sample", 40)),
+            negative_classes_per_image=int(cfg.get("direct_negative_classes_per_image", 2)),
+            seed=seed + (0 if split == "train" else 10000),
+            json_max_objects_per_image=json_max_objects,
         ) if cfg.get("build_detection_tasks", True) else []
         direct_path.write_text(json.dumps(direct, ensure_ascii=False, indent=2), encoding="utf-8")
 
@@ -314,6 +549,20 @@ def main() -> None:
             task_counts[row["task"]] += 1
             class_counts[row["class_name"]] += 1
             image_counts.add(row["image_path"])
+        direct_user_chars = sum(
+            len(str((row.get("messages") or [{}])[0].get("content") or ""))
+            for row in direct
+        )
+        direct_assistant_chars = sum(
+            len(str((row.get("messages") or [{}, {}])[-1].get("content") or ""))
+            for row in direct
+        )
+        direct_objects = sum(
+            int((row.get("metadata") or {}).get("objects_in_sample")
+                or (row.get("metadata") or {}).get("objects_in_chunk")
+                or 0)
+            for row in direct
+        )
         report["splits"][split] = {
             "ref_rows": len(refs),
             "socratic_source_rows": len(source_refs),
@@ -323,6 +572,14 @@ def main() -> None:
             "agent_task_counts": dict(sorted(task_counts.items())),
             "agent_class_counts": dict(sorted(class_counts.items())),
             "direct_samples": len(direct),
+            "direct_qa_mode": direct_mode,
+            "direct_total_user_chars": direct_user_chars,
+            "direct_total_assistant_chars": direct_assistant_chars,
+            "direct_total_objects": direct_objects,
+            "direct_avg_objects_per_sample": (direct_objects / len(direct) if direct else 0.0),
+            "direct_avg_chars_per_sample": (
+                (direct_user_chars + direct_assistant_chars) / len(direct) if direct else 0.0
+            ),
             "agent_file": str(agent_path),
             "direct_file": str(direct_path),
         }

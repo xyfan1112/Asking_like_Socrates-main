@@ -19,6 +19,16 @@ def main() -> int:
     ap.add_argument("--lang", choices=("zh", "en"), required=True)
     ap.add_argument("--output-root", type=Path)
     ap.add_argument("--output", type=Path)
+    ap.add_argument(
+        "--direct-qa-mode",
+        choices=(
+            "legacy_class_roi_obb",
+            "all_image_json_obb",
+            "all_image_json_hbb",
+            "single_ref_json_obb",
+        ),
+        default="legacy_class_roi_obb",
+    )
     args = ap.parse_args()
 
     base_path = args.base_settings.expanduser().resolve()
@@ -39,7 +49,7 @@ def main() -> int:
     output = (
         args.output.expanduser().resolve()
         if args.output
-        else output_root / "config" / "settings.zh.v1.2.0.json"
+        else output_root / "config" / "settings.zh.v1.2.1.json"
     )
 
     base = json.loads(base_path.read_text(encoding="utf-8"))
@@ -84,13 +94,16 @@ def main() -> int:
 
     cfg["taxonomy"] = {
         "mode": "custom",
-        "dataset_name": "custom_obb_zh_v1.2.0",
+        "dataset_name": "custom_obb_zh_v1.2.1",
         "classes_file": str(classes_path),
         "qa_language": "zh",
         "strict_exact_final_label": True,
         "preserve_output_paths": True,
     }
-    cfg.setdefault("data_conversion", {})["qa_language"] = "zh"
+    data_conversion = cfg.setdefault("data_conversion", {})
+    data_conversion["qa_language"] = "zh"
+    data_conversion["direct_qa_mode"] = args.direct_qa_mode
+    data_conversion.setdefault("direct_json_max_objects_per_image", 200)
     trajectory = cfg.setdefault("trajectory", {})
     trajectory["qa_language"] = "zh"
     trajectory["prompt_profile"] = "custom_obb_bilingual_v1"
@@ -104,6 +117,12 @@ def main() -> int:
     training["b2_merged_output"] = str(output_root / "models" / "RS-EoT-Custom-B2-Socratic-Merged")
     training["d1_adapter_output"] = str(output_root / "training" / "d1_direct_only_lora")
     training["d1_merged_output"] = str(output_root / "models" / "RS-EoT-Custom-D1-Direct-Only-Merged")
+    training["b1_direct_standalone_adapter_output"] = str(
+        output_root / "training" / "b1_direct_standalone_lora"
+    )
+    training["b1_direct_standalone_merged_output"] = str(
+        output_root / "models" / "RS-EoT-B1-Direct-Standalone-Merged"
+    )
 
     base_key = training.get("base_model_key", "rs_eot")
     base_model = copy.deepcopy(cfg.get("models", {}).get(base_key, {}))
@@ -113,11 +132,17 @@ def main() -> int:
     base_model["served_name"] = "rs-eot-d1-direct-only"
     cfg.setdefault("models", {})["rs_eot_d1_direct_only"] = base_model
 
-    cfg["v1_2_0_invariants"] = {
+    b1_direct_model = copy.deepcopy(cfg.get("models", {}).get(base_key, {}))
+    b1_direct_model["path"] = training["b1_direct_standalone_merged_output"]
+    b1_direct_model["served_name"] = "rs-eot-b1-direct"
+    cfg.setdefault("models", {})["rs-eot-b1-direct"] = b1_direct_model
+
+    cfg["v1_2_1_invariants"] = {
         "english_settings_unchanged": str(base_path),
         "chinese_output_root": str(output_root),
         "input_dota128_root_unchanged": str(input_dota_root),
         "question_similarity_threshold": threshold,
+        "direct_qa_mode": args.direct_qa_mode,
         "official_max_loop_preserved": official.get("max_loop"),
         "agent_max_tokens_preserved": {
             role: cfg.get("agents", {}).get(role, {}).get("max_tokens")
@@ -131,7 +156,7 @@ def main() -> int:
 
     manifest = output.with_suffix(".manifest.json")
     manifest.write_text(
-        json.dumps(cfg["v1_2_0_invariants"], ensure_ascii=False, indent=2) + "\n",
+        json.dumps(cfg["v1_2_1_invariants"], ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
     print("[PASS] Chinese settings materialized")
@@ -140,8 +165,9 @@ def main() -> int:
     print(" input_data =", input_dota_root)
     print(" classes =", classes_path)
     print(" question_similarity_threshold =", threshold)
+    print(" direct_qa_mode =", args.direct_qa_mode)
     print(" max_loop =", official.get("max_loop"))
-    print(" agent max_tokens =", cfg["v1_2_0_invariants"]["agent_max_tokens_preserved"])
+    print(" agent max_tokens =", cfg["v1_2_1_invariants"]["agent_max_tokens_preserved"])
     return 0
 
 

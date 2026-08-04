@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Unified experiment entry point for custom OBB bilingual patch v1.2.0.
+"""Unified experiment entry point for custom OBB bilingual patch v1.2.1.
 
 The main layer is intentionally thin: it materializes a base settings file plus
 one experiment profile, chooses the correct workload Python, records the exact
@@ -52,6 +52,13 @@ PY_COMMANDS: dict[str, tuple[str, str]] = {
     "generate-d1-config": ("sft", "train_layer/02c_generate_d1_direct_only_config.py"),
     "validate-d1": ("sft", "train_layer/01c_validate_d1_direct_only.py"),
     "register-d1-model": ("data", "tools/register_d1_model.py"),
+    "validate-b1-direct-standalone": ("sft", "train_layer/01d_validate_b1_direct_standalone.py"),
+    "generate-b1-direct-config": ("sft", "train_layer/02d_generate_b1_direct_standalone_config.py"),
+    "validate-b1-direct-contract": ("sft", "train_layer/02e_validate_b1_direct_contract.py"),
+    "register-b1-direct-model": ("data", "tools/register_b1_direct_model.py"),
+    "omni-preflight": ("vllm", "tools/check_qwen3_omni_4gpu.py"),
+    "materialize-shared-omni-agents": ("data", "tools/materialize_shared_omni_agent_settings.py"),
+    "check-shared-omni-endpoint": ("data", "tools/check_shared_omni_endpoint.py"),
 }
 
 SHELL_COMMANDS = {
@@ -75,6 +82,8 @@ SHELL_COMMANDS = {
     "rl-stage1": "train_layer/rl/03_launch_stage1_grounding.sh",
     "train-d1": "train_layer/03c_train_d1_direct_only.sh",
     "merge-d1": "train_layer/05c_export_d1_direct_only.sh",
+    "train-b1-direct-standalone": "train_layer/03d_train_b1_direct_standalone.sh",
+    "merge-b1-direct-standalone": "train_layer/05d_export_b1_direct_standalone.sh",
 }
 
 INFRA_COMMANDS = {"start-agents", "stop-agents", "start-eval", "stop-eval"}

@@ -87,6 +87,10 @@ REASONER_FAIL_CLOSED = _env_bool("ALS_REASONER_FAIL_CLOSED", True)
 MAX_CROP_COORDINATE_COVERAGE = min(1.0, max(0.5, float(
     os.getenv("ALS_MAX_CROP_COORDINATE_COVERAGE", "0.94")
 )))
+# Qwen3-Omni defaults to text+audio output in vLLM-Omni when modalities are
+# omitted.  Trajectory generation needs text only.  Keep this opt-in so the
+# normal Qwen3-VL route is byte-for-byte unchanged.
+OMNI_TEXT_ONLY = _env_bool("ALS_OMNI_TEXT_ONLY", False)
 
 _RUNTIME_CATALOG = runtime_catalog()
 _QA_LANG = _RUNTIME_CATALOG.language
@@ -1670,13 +1674,18 @@ class APIModel:
             messages.append({"role": "user", "content": query})
 
         max_tokens, temperature, top_p = _sampling(self.model_name)
-        result = client.chat.completions.create(
-            model=self.served_name,
-            messages=messages,
-            max_tokens=max_tokens,
-            temperature=temperature,
-            top_p=top_p,
-        )
+        request_kwargs: Dict[str, Any] = {
+            "model": self.served_name,
+            "messages": messages,
+            "max_tokens": max_tokens,
+            "temperature": temperature,
+            "top_p": top_p,
+        }
+        if OMNI_TEXT_ONLY:
+            # ``extra_body`` remains compatible with OpenAI-compatible servers
+            # while forwarding the vLLM-Omni-specific modality control.
+            request_kwargs["extra_body"] = {"modalities": ["text"]}
+        result = client.chat.completions.create(**request_kwargs)
         choice = result.choices[0]
         content_text = choice.message.content or ""
         usage = getattr(result, "usage", None)
@@ -1694,6 +1703,7 @@ class APIModel:
             "query_chars": len(query),
             "response_chars": len(content_text),
             "response_preview": content_text[:300],
+            "omni_text_only": OMNI_TEXT_ONLY,
         }
         if self.role == "perceiver":
             meta.update(

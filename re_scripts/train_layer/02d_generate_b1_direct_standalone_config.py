@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate isolated D1 Direct-only train/export YAML files."""
+"""Generate B1-Direct-Standalone train/export YAML files without Socratic data."""
 from __future__ import annotations
 
 import argparse
@@ -14,7 +14,7 @@ from config import resolve_training_template  # noqa: E402
 def method_block(training: dict) -> str:
     mode = training.get("finetuning_type", "lora")
     if mode != "lora":
-        raise ValueError("D1 v1.2.1 supports the stable LoRA configuration only")
+        raise ValueError("B1-Direct-Standalone v1.2.1 supports the stable LoRA configuration only")
     return "\n".join([
         "stage: sft",
         "do_train: true",
@@ -39,8 +39,8 @@ def main() -> int:
     base = settings["models"][base_key]["path"]
     template = resolve_training_template(settings, base_key)
     data = settings["paths"]["dota128_llamafactory_root"]
-    output = training["d1_adapter_output"]
-    merged = training["d1_merged_output"]
+    output = training["b1_direct_standalone_adapter_output"]
+    merged = training["b1_direct_standalone_merged_output"]
     run = Path(settings["paths"]["training_run_root"])
     cfg_dir = run / "configs"
     cfg_dir.mkdir(parents=True, exist_ok=True)
@@ -99,11 +99,11 @@ export_device: cpu
 export_legacy_format: false
 trust_remote_code: true
 """
-    train_path = cfg_dir / "d1_direct_only_lora.yaml"
-    export_path = cfg_dir / "d1_export.yaml"
+    train_path = cfg_dir / "b1_direct_standalone_lora.yaml"
+    export_path = cfg_dir / "b1_direct_standalone_export.yaml"
     train_path.write_text(train_yaml, encoding="utf-8")
     export_path.write_text(export_yaml, encoding="utf-8")
-    print("[D1 CONFIG] PASS")
+    print("[B1 DIRECT CONFIG] PASS")
     print(" train =", train_path)
     print(" export =", export_path)
     return 0
