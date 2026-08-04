@@ -18,7 +18,10 @@ while IFS= read -r source; do
   bash -n "$TARGET/$rel"
 done < <(find "$HERE/files" -type f -name '*.sh' | sort)
 
-bash -n "$HERE/commands/run_v1.2.1.sh" "$HERE/commands/user_config.sh"
+bash -n \
+  "$HERE/commands/run_v1.2.2.sh" \
+  "$HERE/commands/manage_omni_tp4.sh" \
+  "$HERE/commands/user_config.sh"
 
-echo "[PASS] files/ 已覆盖到 $TARGET，补丁内全部Python和Shell静态语法检查通过。"
-echo "[INFO] 可用 VS Code Discard Changes 回退已追踪文件；新增未追踪文件需手动删除。"
+echo "[PASS] v1.2.2 files/ 已覆盖到 $TARGET，Python和Shell静态语法检查通过。"
+echo "[INFO] Git已追踪文件可用VS Code Discard Changes回退；新增未追踪文件需手动删除。"

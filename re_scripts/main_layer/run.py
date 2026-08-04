@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Unified experiment entry point for custom OBB bilingual patch v1.2.1.
+"""Unified experiment entry point for custom OBB bilingual patch v1.2.2.
 
 The main layer is intentionally thin: it materializes a base settings file plus
 one experiment profile, chooses the correct workload Python, records the exact

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Smoke-test one shared Qwen3-Omni OpenAI-compatible endpoint.
+"""Smoke-test one shared Qwen3-Omni AWQ-No-TTS TP=4 endpoint.
 
-The check performs a model-list request, one text request and one image request.
-It never starts or modifies the server.
+Checks /models, a Reasoner-style text call, a Perceiver-style image call, and a
+Verifier-style structured text call. It never starts or modifies the server.
 """
 from __future__ import annotations
 
@@ -13,12 +13,13 @@ import mimetypes
 import sys
 import urllib.request
 from pathlib import Path
+from typing import Any
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "main_layer"))
 from common import load_settings, settings_from_cli  # noqa: E402
 
 
-def request_json(url: str, payload: dict | None = None, timeout: int = 120) -> dict:
+def request_json(url: str, payload: dict[str, Any] | None = None, timeout: int = 180) -> dict[str, Any]:
     body = json.dumps(payload, ensure_ascii=False).encode("utf-8") if payload is not None else None
     req = urllib.request.Request(
         url,
@@ -27,10 +28,13 @@ def request_json(url: str, payload: dict | None = None, timeout: int = 120) -> d
         method="POST" if body is not None else "GET",
     )
     with urllib.request.urlopen(req, timeout=timeout) as response:
-        return json.loads(response.read())
+        value = json.loads(response.read())
+    if not isinstance(value, dict):
+        raise TypeError("response root is not object")
+    return value
 
 
-def first_image(settings: dict) -> Path:
+def first_image(settings: dict[str, Any]) -> Path:
     root = Path(settings["paths"]["dota128_root"])
     for split in ("val", "train"):
         image_dir = root / split / "images"
@@ -48,11 +52,41 @@ def data_url(path: Path) -> str:
     return f"data:{mime};base64,{encoded}"
 
 
-def text_from_response(value: dict) -> str:
+def parse_choice(value: dict[str, Any]) -> tuple[str, str | None, dict[str, Any]]:
     choices = value.get("choices") or []
     if not choices:
-        return ""
-    return str((choices[0].get("message") or {}).get("content") or "").strip()
+        return "", None, value.get("usage") or {}
+    choice = choices[0]
+    message = choice.get("message") or {}
+    content = message.get("content")
+    if isinstance(content, list):
+        parts = []
+        for item in content:
+            if isinstance(item, dict):
+                parts.append(str(item.get("text") or item.get("content") or ""))
+            else:
+                parts.append(str(item))
+        text = "".join(parts).strip()
+    else:
+        text = str(content or "").strip()
+    return text, choice.get("finish_reason"), value.get("usage") or {}
+
+
+def run_call(base: str, payload: dict[str, Any], label: str, failures: list[str], report: dict[str, Any]) -> None:
+    try:
+        response = request_json(base + "/chat/completions", payload)
+        text, finish, usage = parse_choice(response)
+        report[label] = {
+            "text": text[:500],
+            "finish_reason": finish,
+            "usage": usage,
+        }
+        if not text:
+            failures.append(f"{label}_empty")
+        if str(finish).lower() == "length":
+            failures.append(f"{label}_finish_reason_length")
+    except Exception as exc:
+        failures.append(f"{label}_failed:{type(exc).__name__}:{exc}")
 
 
 def main() -> int:
@@ -66,10 +100,14 @@ def main() -> int:
     base = str(args.base_url or shared.get("base_url") or settings["agents"]["reasoner"]["base_url"]).rstrip("/")
     model = str(args.served_name or shared.get("served_name") or settings["agents"]["reasoner"]["served_name"])
     failures: list[str] = []
-    report: dict[str, object] = {"base_url": base, "served_name": model}
+    report: dict[str, Any] = {
+        "base_url": base,
+        "served_name": model,
+        "shared_contract": shared,
+    }
 
     try:
-        models = request_json(base + "/models", timeout=20)
+        models = request_json(base + "/models", timeout=30)
         ids = [item.get("id") for item in models.get("data", [])]
         report["models"] = ids
         if model not in ids:
@@ -77,52 +115,79 @@ def main() -> int:
     except Exception as exc:
         failures.append(f"models_request_failed:{type(exc).__name__}:{exc}")
 
-    text_only = bool(shared.get("text_only", False))
-    common = {"model": model, "temperature": 0.0, "max_tokens": 32}
-    if text_only:
-        common["modalities"] = ["text"]
-    report["request_modalities_text"] = text_only
-    try:
-        response = request_json(
-            base + "/chat/completions",
-            {**common, "messages": [{"role": "user", "content": "只回复OK。"}]},
-        )
-        text = text_from_response(response)
-        report["text_response"] = text[:200]
-        if not text:
-            failures.append("text_request_empty")
-    except Exception as exc:
-        failures.append(f"text_request_failed:{type(exc).__name__}:{exc}")
+    common: dict[str, Any] = {"model": model, "temperature": 0.0, "max_tokens": 96}
+    run_call(
+        base,
+        {
+            **common,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "你是Reasoner，只按要求输出结构化文本。",
+                },
+                {
+                    "role": "user",
+                    "content": "只输出：<thinking>已理解</thinking><question>图像中是否存在目标？</question>",
+                },
+            ],
+        },
+        "reasoner_text",
+        failures,
+        report,
+    )
 
     try:
         image = first_image(settings)
-        response = request_json(
-            base + "/chat/completions",
+        report["image"] = str(image)
+        run_call(
+            base,
             {
                 **common,
                 "messages": [
                     {
+                        "role": "system",
+                        "content": "你是Perceiver，只描述图像中直接可见的事实。",
+                    },
+                    {
                         "role": "user",
                         "content": [
                             {"type": "image_url", "image_url": {"url": data_url(image)}},
-                            {"type": "text", "text": "只回答：图像已读取。"},
+                            {"type": "text", "text": "只回答：图像已读取，并用不超过20个字描述最显著目标。"},
                         ],
-                    }
+                    },
                 ],
             },
+            "perceiver_image",
+            failures,
+            report,
         )
-        text = text_from_response(response)
-        report["image"] = str(image)
-        report["image_response"] = text[:200]
-        if not text:
-            failures.append("image_request_empty")
     except Exception as exc:
-        failures.append(f"image_request_failed:{type(exc).__name__}:{exc}")
+        failures.append(f"image_prepare_failed:{type(exc).__name__}:{exc}")
+
+    run_call(
+        base,
+        {
+            **common,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "你是Verifier，只输出ACCEPT或REJECT。",
+                },
+                {
+                    "role": "user",
+                    "content": "候选答案严格等于GT。只输出ACCEPT。",
+                },
+            ],
+        },
+        "verifier_text",
+        failures,
+        report,
+    )
 
     report["failures"] = failures
     report["passed"] = not failures
     print(json.dumps(report, ensure_ascii=False, indent=2))
-    print(f"[SHARED OMNI ENDPOINT] {'PASS' if not failures else 'FAIL'}")
+    print(f"[SHARED OMNI TP4 ENDPOINT] {'PASS' if not failures else 'FAIL'}")
     return 0 if not failures else 2
 
 

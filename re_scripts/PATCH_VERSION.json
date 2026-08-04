@@ -1,26 +1,48 @@
 {
-  "name": "v1.2.0_2A6000_custom_zh_stable_patch",
-  "version": "1.2.0",
-  "base": "2A6000 / ssh1.2.2.2 stable flow",
-  "language_policy": {
-    "english": "unchanged original settings and output paths",
-    "chinese": "isolated user-selected output root"
-  },
-  "invariants": {
+  "name": "v1.2.2_2A6000_direct_json_shared_omni_tp4_patch",
+  "version": "1.2.2",
+  "base_branch": "2A6000",
+  "base_pipeline": "ssh1.2.2.2 / v4.3.3 style",
+  "cumulative_from": [
+    "v1.2.0 Chinese ROI/task/coordinate/repetition repair",
+    "v1.2.1 Direct standalone baseline and optional JSON QA"
+  ],
+  "target_omni_checkpoint": "tclf90/Qwen3-Omni-30B-A3B-Instruct-AWQ-No-TTS",
+  "features": [
+    "dynamic classes.txt Chinese/mixed labels",
+    "isolated Chinese output root; English unchanged",
+    "Chinese ROI/task/coordinate/repetition repairs",
+    "finite non-repeating recovery question bank",
+    "Socratic-independent B1-Direct-Standalone gates/train/merge/eval",
+    "four selectable Direct QA modes",
+    "one Qwen3-Omni physical server shared by three logical roles",
+    "four-GPU tensor parallel size 4 for every model request",
+    "AWQ and No-TTS static checkpoint inspection",
+    "managed TP4 start/stop/status/log commands",
+    "real Reasoner/Perceiver/Verifier smoke test",
+    "concurrency 1/2/4 endpoint benchmark with four-GPU utilization sampling"
+  ],
+  "scientific_invariants": {
     "question_similarity_threshold": 0.95,
-    "increase_max_loop": false,
-    "increase_max_tokens_without_finish_reason_length": false,
-    "lower_debug_thresholds": false,
-    "full_before_debug_pass": false
+    "max_loop": "preserved from base settings",
+    "max_tokens": "preserved from base settings",
+    "debug_thresholds": "preserved from base settings",
+    "debug_concurrency": 1,
+    "full_requires_debug_pass": true
   },
-  "fixes": [
-    "Chinese ROI extraction",
-    "Chinese coordinate intent",
-    "Chinese task detection",
-    "Unicode duplicate-question detection",
-    "finite non-repeating recovery bank",
-    "classification label-list redaction from Perceiver",
-    "independent Chinese settings/output root",
-    "B0 evaluation and D1 Direct-only baseline workflow"
-  ]
+  "omni_topology": {
+    "physical_servers": 1,
+    "physical_weight_copies": 1,
+    "logical_roles": 3,
+    "tensor_parallel_size": 4,
+    "each_request_uses_all_four_gpus": true,
+    "default_profile": "balanced",
+    "default_full_concurrency": 4
+  },
+  "safety_boundary": {
+    "automatic_environment_install": false,
+    "automatic_omni_finetune": false,
+    "automatic_threshold_relaxation": false,
+    "third_party_awq_requires_load_and_image_smoke": true
+  }
 }

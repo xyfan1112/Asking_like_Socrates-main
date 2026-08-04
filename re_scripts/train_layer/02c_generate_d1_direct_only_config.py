@@ -14,7 +14,7 @@ from config import resolve_training_template  # noqa: E402
 def method_block(training: dict) -> str:
     mode = training.get("finetuning_type", "lora")
     if mode != "lora":
-        raise ValueError("D1 v1.2.1 supports the stable LoRA configuration only")
+        raise ValueError("D1 v1.2.2 supports the stable LoRA configuration only")
     return "\n".join([
         "stage: sft",
         "do_train: true",

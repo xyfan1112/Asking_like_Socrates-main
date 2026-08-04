@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validate a Socratic-independent B1-Direct-Standalone dataset.
 
-This gate accepts the four Direct QA modes introduced by v1.2.1 and refuses
+This gate accepts the four Direct QA modes introduced by v1.2.1 and retained by v1.2.2 and refuses
 Socratic rows, malformed JSON contracts, missing images, mixed modes, and an
 optimizer-step count below the stable settings threshold.
 """

@@ -49,7 +49,7 @@ def main() -> int:
     output = (
         args.output.expanduser().resolve()
         if args.output
-        else output_root / "config" / "settings.zh.v1.2.1.json"
+        else output_root / "config" / "settings.zh.v1.2.2.json"
     )
 
     base = json.loads(base_path.read_text(encoding="utf-8"))
@@ -94,7 +94,7 @@ def main() -> int:
 
     cfg["taxonomy"] = {
         "mode": "custom",
-        "dataset_name": "custom_obb_zh_v1.2.1",
+        "dataset_name": "custom_obb_zh_v1.2.2",
         "classes_file": str(classes_path),
         "qa_language": "zh",
         "strict_exact_final_label": True,
@@ -137,7 +137,7 @@ def main() -> int:
     b1_direct_model["served_name"] = "rs-eot-b1-direct"
     cfg.setdefault("models", {})["rs-eot-b1-direct"] = b1_direct_model
 
-    cfg["v1_2_1_invariants"] = {
+    cfg["v1_2_2_invariants"] = {
         "english_settings_unchanged": str(base_path),
         "chinese_output_root": str(output_root),
         "input_dota128_root_unchanged": str(input_dota_root),
@@ -156,7 +156,7 @@ def main() -> int:
 
     manifest = output.with_suffix(".manifest.json")
     manifest.write_text(
-        json.dumps(cfg["v1_2_1_invariants"], ensure_ascii=False, indent=2) + "\n",
+        json.dumps(cfg["v1_2_2_invariants"], ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
     print("[PASS] Chinese settings materialized")
@@ -167,7 +167,7 @@ def main() -> int:
     print(" question_similarity_threshold =", threshold)
     print(" direct_qa_mode =", args.direct_qa_mode)
     print(" max_loop =", official.get("max_loop"))
-    print(" agent max_tokens =", cfg["v1_2_1_invariants"]["agent_max_tokens_preserved"])
+    print(" agent max_tokens =", cfg["v1_2_2_invariants"]["agent_max_tokens_preserved"])
     return 0
 
 
