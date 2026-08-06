@@ -1,0 +1,11 @@
+Deployment profile: vieo temporary machine
+Workspace: /home/vieo/vieo/fxy_workspace
+Available physical GPUs: 0,1,3
+GPU model: NVIDIA RTX A6000 48GB
+
+Default plan:
+- Shared Qwen3-Omni Agent: CUDA_VISIBLE_DEVICES=0,1; TP=2; port=8091
+- SFT: CUDA_VISIBLE_DEVICES=0,1; world_size=2; effective global batch=8
+- Evaluation: CUDA_VISIBLE_DEVICES=3; single server; port=8010
+
+Always inspect nvidia-smi and process owners before starting. Do not stop other users' processes.

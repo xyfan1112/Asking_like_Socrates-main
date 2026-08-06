@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Fail-closed preflight for Qwen3-Omni AWQ-No-TTS on one 4-GPU TP server.
+"""Fail-closed preflight for Qwen3-Omni AWQ-No-TTS on one configurable TP server.
 
 The tool does not download, install, start, or modify anything. It checks:
-- exactly usable four-GPU visibility and memory;
+- enough visible GPUs for the requested tensor-parallel size and memory;
 - vLLM CLI support for the required tensor-parallel flags;
 - Qwen3-Omni model metadata and pre-quantization fields;
 - whether the checkpoint index contains Talker/TTS weights;
@@ -112,14 +112,18 @@ def inspect_vllm_cli(python_exe: str) -> dict[str, Any]:
         "python": python_exe,
         "vllm_bin": str(vllm_bin),
         "vllm_bin_exists": vllm_bin.is_file(),
+        "invocation": [python_exe, "-m", "vllm.entrypoints.cli.main", "serve", "--help=all"],
         "flags": {},
     }
-    if vllm_bin.is_file():
-        code, text = run_text([str(vllm_bin), "serve", "--help"], timeout=60)
-    else:
-        code, text = run_text([python_exe, "-m", "vllm.entrypoints.cli.main", "serve", "--help"], timeout=60)
+    # vLLM 0.11.0的普通--help只显示配置分组，不显示全部flag。
+    # 始终使用环境自身Python，避免#!/usr/bin/env python受外部PATH污染。
+    code, text = run_text(result["invocation"], timeout=90)
+    if code != 0:
+        fallback = [python_exe, "-m", "vllm.entrypoints.cli.main", "serve", "--help"]
+        code, text = run_text(fallback, timeout=90)
+        result["fallback_invocation"] = fallback
     result["help_returncode"] = code
-    result["help_preview"] = text[:4000]
+    result["help_preview"] = text[:12000]
     for flag in (
         "--tensor-parallel-size",
         "--distributed-executor-backend",
@@ -137,7 +141,7 @@ def inspect_vllm_cli(python_exe: str) -> dict[str, Any]:
     return result
 
 
-def gpu_report() -> tuple[dict[str, Any], list[str], list[str]]:
+def gpu_report(required_gpu_count: int) -> tuple[dict[str, Any], list[str], list[str]]:
     critical: list[str] = []
     warnings: list[str] = []
     report: dict[str, Any] = {}
@@ -165,9 +169,9 @@ def gpu_report() -> tuple[dict[str, Any], list[str], list[str]]:
         }
         if not torch.cuda.is_available():
             critical.append("cuda_not_available")
-        if count < 4:
-            critical.append(f"visible_gpu_count={count}<4")
-        for gpu in gpus[:4]:
+        if count < required_gpu_count:
+            critical.append(f"visible_gpu_count={count}<tensor_parallel_size={required_gpu_count}")
+        for gpu in gpus[:required_gpu_count]:
             if float(gpu["memory_gib"]) < 44:
                 critical.append(f"gpu{gpu['index']}_memory={gpu['memory_gib']}GiB<44GiB")
             if "A6000" not in str(gpu["name"]):
@@ -183,7 +187,7 @@ def gpu_report() -> tuple[dict[str, Any], list[str], list[str]]:
         # TP=4 still works over PCIe, but SYS/PHB links can make TP latency
         # slower than a smaller TP topology. This is advisory, not a failure.
         if "NV" not in topo and any(token in topo for token in ("SYS", "PHB", "PXB")):
-            warnings.append("four_gpu_topology_has_no_visible_nvlink;TP4_uses_PCIe_and_may_be_communication_bound")
+            warnings.append(f"tp{required_gpu_count}_topology_has_no_visible_nvlink;PCIe_all_reduce_may_be_communication_bound")
     return report, critical, warnings
 
 
@@ -205,12 +209,12 @@ def main() -> int:
         "require_no_tts": args.require_no_tts,
     }
 
-    gpu, gpu_critical, gpu_warnings = gpu_report()
+    gpu, gpu_critical, gpu_warnings = gpu_report(args.tensor_parallel_size)
     report.update(gpu)
     critical.extend(gpu_critical)
     warnings.extend(gpu_warnings)
-    if args.tensor_parallel_size != 4:
-        critical.append(f"tensor_parallel_size={args.tensor_parallel_size};v1.2.2_requires_4")
+    if args.tensor_parallel_size < 1:
+        critical.append(f"invalid_tensor_parallel_size={args.tensor_parallel_size}")
 
     packages = {
         name: version(name)
@@ -321,13 +325,13 @@ def main() -> int:
         "physical_servers": 1,
         "physical_weight_copies": 1,
         "logical_roles": ["reasoner", "perceiver", "verifier"],
-        "tensor_parallel_size": 4,
-        "each_request_uses_all_four_gpus": True,
+        "tensor_parallel_size": args.tensor_parallel_size,
+        "each_request_uses_all_visible_tp_gpus": True,
         "debug_concurrency": 1,
-        "full_concurrency_initial": 4,
+        "full_concurrency_initial": 1,
         "note": (
-            "TP=4 shards one model across all four GPUs. It maximizes usable memory and lets every "
-            "request execute across four cards. It does not guarantee fourfold latency speedup because "
+            f"TP={args.tensor_parallel_size} shards one model across the selected visible GPUs. "
+            "It increases usable memory but does not guarantee proportional latency speedup; "
             "all-reduce communication can dominate on PCIe-only topology."
         ),
     }
@@ -335,9 +339,9 @@ def main() -> int:
     report["warnings"] = warnings
     report["passed"] = not critical
     print(json.dumps(report, ensure_ascii=False, indent=2))
-    print(f"[OMNI TP4 PREFLIGHT] {'PASS' if not critical else 'FAIL'}")
+    print(f"[OMNI TP PREFLIGHT] {'PASS' if not critical else 'FAIL'}")
     if warnings:
-        print(f"[OMNI TP4 PREFLIGHT] warnings={len(warnings)}")
+        print(f"[OMNI TP PREFLIGHT] warnings={len(warnings)}")
     return 0 if not critical else 2
 
 

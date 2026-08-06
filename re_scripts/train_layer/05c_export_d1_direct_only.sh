@@ -40,6 +40,6 @@ for line in src.splitlines():
 Path(sys.argv[2]).write_text('\n'.join(lines)+'\n',encoding='utf-8')
 PY
 cd "$LLAMA_FACTORY_DIR"
-"$LLAMAFACTORY_CLI" export "$RESOLVED"
+llamafactory_cli export "$RESOLVED"
 [[ -f "$MERGED/config.json" ]] || { echo "[FAIL] merged config missing: $MERGED/config.json" >&2; exit 3; }
 echo "[PASS] D1 merged: $MERGED"

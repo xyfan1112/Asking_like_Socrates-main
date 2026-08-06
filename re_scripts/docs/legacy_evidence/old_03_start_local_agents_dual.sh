@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT="/home/yk/Asking_like_Socrates"
 SCRIPT_DIR="$ROOT/fined_scripts"
-LOG_DIR="/home/yk/fxy/results/local_agents"
+LOG_DIR="/home/vieo/vieo/fxy_workspace/fxy/results/local_agents"
 PID_DIR="$LOG_DIR/pids"
 
 source "$HOME/miniconda3/etc/profile.d/conda.sh"
@@ -18,8 +18,8 @@ export LOCAL_PERCEIVER_BASE_URL=http://127.0.0.1:8002/v1
 export LOCAL_PERCEIVER_MODEL=local-perceiver
 EOF
 
-REASONER="/home/yk/fxy/models/Qwen2.5-7B-Instruct-AWQ"
-PERCEIVER="/home/yk/fxy/models/Qwen2.5-VL-7B-Instruct-AWQ"
+REASONER="/home/vieo/vieo/fxy_workspace/fxy/models/Qwen2.5-7B-Instruct-AWQ"
+PERCEIVER="/home/vieo/vieo/fxy_workspace/fxy/models/Qwen2.5-VL-7B-Instruct-AWQ"
 
 if pgrep -f "vllm serve.*local-reasoner" >/dev/null 2>&1; then
   echo "local-reasoner 已经运行。"

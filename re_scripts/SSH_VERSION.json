@@ -1,15 +1,13 @@
 {
   "ssh_version": "1.2.2.2",
-  "base": "re_scripts_ssh1.2.2 complete fixed",
+  "patch_version": "1.2.3",
+  "base": "v1.2.2.2 production integration, patched from the user's local v1.2.2 ZIP",
   "model_behavior_changes": [],
-  "settings_preserved": {
-    "question_similarity_threshold": 0.95,
-    "perceiver_max_tokens": 512,
-    "classification_min_rounds": 1
-  },
-  "pipeline_changes": [
-    "safe recovered truncations are warnings",
-    "resume existing full raw artifacts",
-    "clear missing-file diagnostics"
+  "runtime_changes": [
+    "four replicated single-GPU evaluation servers",
+    "four-GPU DDP SFT with preserved effective batch",
+    "bilingual full-path materialization",
+    "shared Omni and independent three-service selection",
+    "bounded diagnostic bundles"
   ]
 }

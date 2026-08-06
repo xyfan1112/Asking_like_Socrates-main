@@ -187,7 +187,7 @@ def main() -> int:
     report["failures"] = failures
     report["passed"] = not failures
     print(json.dumps(report, ensure_ascii=False, indent=2))
-    print(f"[SHARED OMNI TP4 ENDPOINT] {'PASS' if not failures else 'FAIL'}")
+    print(f"[SHARED OMNI ENDPOINT] {'PASS' if not failures else 'FAIL'}")
     return 0 if not failures else 2
 
 

@@ -1,48 +1,107 @@
 {
-  "name": "v1.2.2_2A6000_direct_json_shared_omni_tp4_patch",
-  "version": "1.2.2",
-  "base_branch": "2A6000",
-  "base_pipeline": "ssh1.2.2.2 / v4.3.3 style",
-  "cumulative_from": [
-    "v1.2.0 Chinese ROI/task/coordinate/repetition repair",
-    "v1.2.1 Direct standalone baseline and optional JSON QA"
-  ],
-  "target_omni_checkpoint": "tclf90/Qwen3-Omni-30B-A3B-Instruct-AWQ-No-TTS",
-  "features": [
-    "dynamic classes.txt Chinese/mixed labels",
-    "isolated Chinese output root; English unchanged",
-    "Chinese ROI/task/coordinate/repetition repairs",
-    "finite non-repeating recovery question bank",
-    "Socratic-independent B1-Direct-Standalone gates/train/merge/eval",
-    "four selectable Direct QA modes",
-    "one Qwen3-Omni physical server shared by three logical roles",
-    "four-GPU tensor parallel size 4 for every model request",
-    "AWQ and No-TTS static checkpoint inspection",
-    "managed TP4 start/stop/status/log commands",
-    "real Reasoner/Perceiver/Verifier smoke test",
-    "concurrency 1/2/4 endpoint benchmark with four-GPU utilization sampling"
+  "name": "v1.2.3-r3_vieo_temporary_deployment",
+  "version": "1.2.3",
+  "date": "2026-08-04",
+  "base_local_archive": "re_scripts1.2.2(2).zip",
+  "base_branch_reference": "yk",
+  "base_stable_integration": "ssh1.2.2.2",
+  "internal_pipeline_version": "4.3.3",
+  "default_language": "en",
+  "default_dataset_variant": "scene_disjoint",
+  "default_direct_qa_mode": "legacy_class_roi_obb",
+  "default_socratic_topology": "shared",
+  "major_changes": [
+    "one RUN_LANG switch resolves data, classes, prompts, trajectories, training, evaluation and report paths",
+    "English is newly generated under an isolated output root; Chinese remains under the configured Chinese branch",
+    "real classes.txt is read automatically and an exact-id zh-en mapping template is generated",
+    "settings.scene_disjoint.json is no longer required; dataset root is resolved from user_config",
+    "B0/B1/B2 evaluation uses four independent single-GPU vLLM replicas and deterministic SHA256 shards",
+    "LoRA SFT uses four-GPU DDP while preserving effective global batch",
+    "shared Omni remains one physical endpoint with TP=4 and three independent logical message contexts",
+    "original independent Reasoner/Perceiver/Verifier three-service topology is retained",
+    "B0, B1, B2 and safe workflows are exposed through one command file",
+    "support bundle collection excludes weights and images and redacts common secret patterns",
+    "training contract and runtime trainable-parameter reports are emitted",
+    "no silent fallback from missing BASE_SETTINGS",
+    "offline conda-pack migration guide and environment checker are included",
+    "B2 direct-prefix pairing audit prevents accidental Direct-data drift",
+    "post-training adapter safetensors scope audit verifies visual-encoder freezing evidence",
+    "pipeline summary aggregates Socratic funnel, rejection reasons and stage counts without treating missing artifacts as zero",
+    "LLaMA-Factory commands prefer python -m llamafactory.cli to avoid stale migrated shebangs",
+    "shared Omni fast profile remains bounded at concurrency 4 and memory utilization 0.92 until real-server benchmark"
   ],
   "scientific_invariants": {
-    "question_similarity_threshold": 0.95,
+    "question_similarity_threshold": "preserved from base settings",
     "max_loop": "preserved from base settings",
-    "max_tokens": "preserved from base settings",
+    "agent_max_tokens": "preserved from base settings",
     "debug_thresholds": "preserved from base settings",
-    "debug_concurrency": 1,
+    "lora_hyperparameters": "preserved from base settings",
+    "freeze_vision_tower": true,
+    "direct_protocol": "legacy_class_roi_obb by default",
     "full_requires_debug_pass": true
   },
-  "omni_topology": {
-    "physical_servers": 1,
-    "physical_weight_copies": 1,
-    "logical_roles": 3,
-    "tensor_parallel_size": 4,
-    "each_request_uses_all_four_gpus": true,
-    "default_profile": "balanced",
-    "default_full_concurrency": 4
+  "hardware_target": {
+    "available_physical_gpus": [
+      0,
+      1,
+      3
+    ],
+    "gpu_model": "NVIDIA RTX A6000",
+    "memory_mib_each": 49140,
+    "shared_omni": {
+      "physical_gpus": [
+        0,
+        1
+      ],
+      "tensor_parallel_size": 2
+    },
+    "sft": {
+      "physical_gpus": [
+        0,
+        1
+      ],
+      "world_size": 2
+    },
+    "evaluation": {
+      "physical_gpus": [
+        3
+      ],
+      "topology": "single"
+    }
   },
-  "safety_boundary": {
-    "automatic_environment_install": false,
-    "automatic_omni_finetune": false,
-    "automatic_threshold_relaxation": false,
-    "third_party_awq_requires_load_and_image_smoke": true
-  }
+  "test_status": {
+    "python_compileall": "passed",
+    "shell_bash_n": "passed",
+    "v1_2_3_tests": "4 passed",
+    "legacy_tests": "21 passed, 1 inherited test-implementation mismatch",
+    "real_gpu_model_execution": "not run in sandbox"
+  },
+  "release_revision": "r3",
+  "fixes": [
+    "safe flows auto-build or validate scene-disjoint dataset",
+    "Chinese output root can be configured as a flat v1.2.3 directory",
+    "evaluation performs key-specific merged-model preflight before replicas",
+    "remove all downstream shell command substitution for taxonomy classes paths",
+    "read active taxonomy directly from generated settings in data and Socratic stages",
+    "add Python-layer recovery for legacy multi-line shell-polluted classes_file values",
+    "add strict active-taxonomy preflight and report before data conversion",
+    "add runner-root identity guard so a new command script cannot dispatch into a stale re_scripts tree",
+    "add doctor/install fingerprint command and r3 source verifier",
+    "force active settings release_revision=r3 before data/train/eval stages",
+    "vieo double-home path relocation profile",
+    "configurable shared Omni tensor parallel size with TP2 default",
+    "vLLM 0.11.0 CLI checks use environment Python and serve --help=all",
+    "offline conda-pack extraction/conda-unpack helper",
+    "scene-disjoint manifest relocation helper",
+    "evaluation model-key dynamic-scope contamination fix included"
+  ],
+  "deployment_profile": "vieo_temporary_machine",
+  "deployment_paths": {
+    "workspace_root": "/home/vieo/vieo/fxy_workspace",
+    "project_root": "/home/vieo/vieo/fxy_workspace/Asking_like_Socrates-main",
+    "fxy_root": "/home/vieo/vieo/fxy_workspace/fxy",
+    "conda_env_root": "/home/vieo/anaconda3/envs"
+  },
+  "scientific_limit": "B0/B1/B2 remain the original RS-EoT student-model chain; Qwen3-Omni fine-tuning target is not implemented by this deployment profile.",
+  "omni_direct_patch": "clean-routing-1"
 }

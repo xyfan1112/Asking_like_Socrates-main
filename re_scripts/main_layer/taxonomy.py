@@ -15,6 +15,7 @@ import json
 import os
 from pathlib import Path
 import re
+import sys
 import unicodedata
 from typing import Iterable
 
@@ -66,10 +67,65 @@ def _usable_lines(text: str) -> list[str]:
     return rows
 
 
-def load_class_names(classes_file: str | Path) -> tuple[str, ...]:
-    path = Path(classes_file).expanduser().resolve()
-    if not path.is_file():
+def resolve_classes_file_path(
+    classes_file: str | Path,
+    *,
+    must_exist: bool = True,
+    origin: str = "classes_file",
+) -> Path:
+    """Resolve a classes-file value without allowing shell-log contamination.
+
+    v1.2.3-r1 could accidentally capture a progress line together with the real
+    path through Bash command substitution.  The resulting value looked like::
+
+        [PASS] scene-disjoint manifest: ...\n/home/.../classes.zh.txt
+
+    Normal paths must never contain a newline.  For backward recovery, when the
+    value has multiple non-empty lines and exactly one line is an existing file,
+    that file is selected and a loud recovery warning is emitted.  Ambiguous or
+    non-existent values fail before any data conversion starts.
+    """
+    raw = str(classes_file or "")
+    if "\x00" in raw:
+        raise ValueError(f"{origin} contains NUL byte: {raw!r}")
+    lines = [line.strip() for line in raw.replace("\r\n", "\n").replace("\r", "\n").split("\n") if line.strip()]
+    if not lines:
+        raise ValueError(f"{origin} is empty")
+
+    def _candidate(line: str) -> Path:
+        return Path(line).expanduser().resolve()
+
+    if len(lines) > 1:
+        existing = []
+        for line in lines:
+            try:
+                candidate = _candidate(line)
+            except (OSError, ValueError):
+                continue
+            if candidate.is_file():
+                existing.append(candidate)
+        unique = list(dict.fromkeys(existing))
+        if len(unique) == 1:
+            recovered = unique[0]
+            print(
+                f"[TAXONOMY RECOVER][v1.2.3-r3] {origin} contained "
+                f"{len(lines)} lines; using the only existing file: {recovered}",
+                file=sys.stderr,
+            )
+            return recovered
+        raise ValueError(
+            f"{origin} contains multiple lines and cannot be resolved safely: "
+            f"raw={raw!r}, existing_candidates={[str(x) for x in unique]!r}"
+        )
+
+    path = _candidate(lines[0])
+    if must_exist and not path.is_file():
         raise FileNotFoundError(f"classes.txt 不存在: {path}")
+    return path
+
+
+def load_class_names(classes_file: str | Path) -> tuple[str, ...]:
+    path = resolve_classes_file_path(classes_file, origin="load_class_names")
     labels = _usable_lines(path.read_text(encoding="utf-8-sig"))
     if not labels:
         raise ValueError(f"classes.txt 没有有效类别行: {path}")
@@ -93,7 +149,7 @@ def load_class_names(classes_file: str | Path) -> tuple[str, ...]:
 
 
 def class_file_sha256(classes_file: str | Path) -> str:
-    path = Path(classes_file).expanduser().resolve()
+    path = resolve_classes_file_path(classes_file, origin="class_file_sha256")
     labels = load_class_names(path)
     payload = json.dumps(
         list(labels), ensure_ascii=False, separators=(",", ":")
@@ -170,7 +226,7 @@ def runtime_catalog() -> RuntimeCatalog:
         raise ValueError(f"ALS_QA_LANG 只支持 zh/en，当前为: {language!r}")
 
     if classes_file:
-        path = Path(classes_file).expanduser().resolve()
+        path = resolve_classes_file_path(classes_file, origin="ALS_CLASSES_FILE")
         labels = load_class_names(path)
         digest = class_file_sha256(path)
         return RuntimeCatalog(
@@ -228,9 +284,10 @@ def materialize_runtime_taxonomy(
     old_lang = os.environ.get("ALS_QA_LANG")
     try:
         if requested_file:
-            os.environ["ALS_CLASSES_FILE"] = str(
-                Path(requested_file).expanduser().resolve()
+            resolved_file = resolve_classes_file_path(
+                requested_file, origin="CLI/settings taxonomy.classes_file"
             )
+            os.environ["ALS_CLASSES_FILE"] = str(resolved_file)
         else:
             os.environ.pop("ALS_CLASSES_FILE", None)
         os.environ["ALS_QA_LANG"] = requested_lang

@@ -38,7 +38,7 @@ def newest(paths):
 
 
 def main()->int:
-    ap=argparse.ArgumentParser(); ap.add_argument('--settings'); ap.add_argument('--raw',type=Path); ap.add_argument('--raw-dir',type=Path,default=Path('/home/yk/fxy/results/dota128_pipeline/official_socratic/raw')); ap.add_argument('--api-log',type=Path); ap.add_argument('--output',type=Path)
+    ap=argparse.ArgumentParser(); ap.add_argument('--settings'); ap.add_argument('--raw',type=Path); ap.add_argument('--raw-dir',type=Path,default=Path('/home/vieo/vieo/fxy_workspace/fxy/results/dota128_pipeline/official_socratic/raw')); ap.add_argument('--api-log',type=Path); ap.add_argument('--output',type=Path)
     args=ap.parse_args()
     raw_path=args.raw or newest(p for p in args.raw_dir.glob('*debug*.jsonl') if not p.name.startswith('local_api_calls_'))
     if not raw_path: raise SystemExit('[FAIL] no debug raw')

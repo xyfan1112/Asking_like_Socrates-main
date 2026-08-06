@@ -1,51 +1,51 @@
 {
   "project": {
-    "project_root": "/home/yk/Asking_like_Socrates-main",
-    "re_scripts_root": "/home/yk/Asking_like_Socrates-main/re_scripts",
-    "llama_factory_dir": "/home/yk/Asking_like_Socrates-main/LLaMA-Factory",
-    "easy_r1_dir": "/home/yk/Asking_like_Socrates-main/EasyR1",
+    "project_root": "/home/vieo/vieo/fxy_workspace/Asking_like_Socrates-main",
+    "re_scripts_root": "/home/vieo/vieo/fxy_workspace/Asking_like_Socrates-main/re_scripts",
+    "llama_factory_dir": "/home/vieo/vieo/fxy_workspace/Asking_like_Socrates-main/LLaMA-Factory",
+    "easy_r1_dir": "/home/vieo/vieo/fxy_workspace/Asking_like_Socrates-main/EasyR1",
     "seed": 42,
     "llama_factory_dirs": {
-      "qwen25": "/home/yk/Asking_like_Socrates-main/LLaMA-Factory",
-      "qwen3": "/home/yk/Asking_like_Socrates-main/LLaMA-Factory-Qwen3"
+      "qwen25": "/home/vieo/vieo/fxy_workspace/Asking_like_Socrates-main/LLaMA-Factory",
+      "qwen3": "/home/vieo/vieo/fxy_workspace/Asking_like_Socrates-main/LLaMA-Factory"
     }
   },
   "runtime": {
-    "conda_executable": "/home/yk/miniconda3/bin/conda",
+    "conda_executable": "/home/vieo/anaconda3/bin/conda",
     "workloads": {
       "data": {
-        "conda_env": "",
-        "python": "/home/yk/miniconda3/bin/python",
+        "conda_env": "als_sft",
+        "python": "/home/vieo/anaconda3/envs/als_sft/bin/python",
         "allow_fallback_to_current": false,
         "required_module": "datasets"
       },
       "sft": {
         "conda_env": "als_sft",
-        "python": "",
+        "python": "/home/vieo/anaconda3/envs/als_sft/bin/python",
         "allow_fallback_to_current": false,
         "required_module": "llamafactory"
       },
       "vllm": {
         "conda_env": "als_vllm",
-        "python": "",
+        "python": "/home/vieo/anaconda3/envs/als_vllm/bin/python",
         "allow_fallback_to_current": false,
         "required_module": "vllm"
       },
       "rl": {
         "conda_env": "",
-        "python": "/home/yk/miniconda3/bin/python",
+        "python": "/home/vieo/anaconda3/bin/python",
         "allow_fallback_to_current": false,
         "required_module": "verl"
       },
       "qwen3_sft": {
-        "conda_env": "",
-        "python": "/home/yk/miniconda3/bin/python",
+        "conda_env": "als_sft",
+        "python": "/home/vieo/anaconda3/envs/als_sft/bin/python",
         "required_module": "llamafactory",
         "allow_fallback_to_current": false
       },
       "qwen3_vllm": {
         "conda_env": "als_vllm",
-        "python": "",
+        "python": "/home/vieo/anaconda3/envs/als_vllm/bin/python",
         "required_module": "vllm",
         "allow_fallback_to_current": false
       }
@@ -61,8 +61,9 @@
         "world_size": 2
       },
       "eval_single_gpu": {
-        "visible_devices": "1",
-        "gpu_memory_utilization": 0.86
+        "visible_devices": "3",
+        "gpu_memory_utilization": 0.86,
+        "max_model_len": 12288
       },
       "rl_dual_a6000": {
         "visible_devices": "0,1",
@@ -71,28 +72,28 @@
     }
   },
   "paths": {
-    "datasets_root": "/home/yk/fxy/datasets4.3.3",
-    "results_root": "/home/yk/fxy/results4.3.3",
-    "models_root": "/home/yk/fxy/models",
-    "dota128_root": "/home/yk/fxy/datasets/dota128_scene_disjoint",
-    "dota128_ref_root": "/home/yk/fxy/datasets4.3.3/dota128-Ref4.3.3",
-    "dota128_llamafactory_root": "/home/yk/fxy/datasets4.3.3/dota128-llamafactory4.3.3",
-    "dota128_rl_root": "/home/yk/fxy/datasets4.3.3/dota128-rl4.3.3",
-    "rs_eot4k_llamafactory": "/home/yk/fxy/datasets/RS-EoT-4K-llamafactory.json",
-    "vrsbench_image_dir": "/home/yk/fxy/datasets/VRSBench/Images_val",
-    "vrsbench_eval_json": "/home/yk/fxy/datasets/VRSBench/VRSBench_EVAL_vqa.json",
-    "vrsbench_ref_json": "/home/yk/fxy/datasets/VRSBench/VRSBench_EVAL_ref.json",
-    "vrsbench_result_jsonl": "/home/yk/fxy/results/VRSBench_RS-EoT-7B/vrsbench_k5_vllm.jsonl",
-    "pipeline_work_root": "/home/yk/fxy/results4.3.3/dota128_pipeline4.3.3",
-    "trajectory_raw_dir": "/home/yk/fxy/results4.3.3/dota128_pipeline4.3.3/trajectory_raw",
-    "trajectory_audit_dir": "/home/yk/fxy/results4.3.3/dota128_pipeline4.3.3/trajectory_audit",
-    "training_run_root": "/home/yk/fxy/results4.3.3/dota128_training4.3.3",
-    "rl_run_root": "/home/yk/fxy/results4.3.3/dota128_rl4.3.3",
-    "test_run_root": "/home/yk/fxy/results4.3.3/dota128_testing4.3.3"
+    "datasets_root": "/home/vieo/vieo/fxy_workspace/fxy/datasets_ssh",
+    "results_root": "/home/vieo/vieo/fxy_workspace/fxy/results_ssh",
+    "models_root": "/home/vieo/vieo/fxy_workspace/fxy/models",
+    "dota128_root": "/home/vieo/vieo/fxy_workspace/fxy/datasets/yw128",
+    "dota128_ref_root": "/home/vieo/vieo/fxy_workspace/fxy/datasets_ssh/yw128-Ref_ssh",
+    "dota128_llamafactory_root": "/home/vieo/vieo/fxy_workspace/fxy/datasets_ssh/yw128-llamafactory_ssh",
+    "dota128_rl_root": "/home/vieo/vieo/fxy_workspace/fxy/datasets_ssh/yw128-rl_ssh",
+    "rs_eot4k_llamafactory": "/home/vieo/vieo/fxy_workspace/fxy/datasets/RS-EoT-4K-llamafactory.json",
+    "vrsbench_image_dir": "/home/vieo/vieo/fxy_workspace/fxy/datasets/VRSBench/Images_val",
+    "vrsbench_eval_json": "/home/vieo/vieo/fxy_workspace/fxy/datasets/VRSBench/VRSBench_EVAL_vqa.json",
+    "vrsbench_ref_json": "/home/vieo/vieo/fxy_workspace/fxy/datasets/VRSBench/VRSBench_EVAL_ref.json",
+    "vrsbench_result_jsonl": "/home/vieo/vieo/fxy_workspace/fxy/results/VRSBench_RS-EoT-7B/vrsbench_k5_vllm.jsonl",
+    "pipeline_work_root": "/home/vieo/vieo/fxy_workspace/fxy/results_ssh/yw128_pipeline_ssh",
+    "trajectory_raw_dir": "/home/vieo/vieo/fxy_workspace/fxy/results_ssh/yw128_pipeline_ssh/trajectory_raw",
+    "trajectory_audit_dir": "/home/vieo/vieo/fxy_workspace/fxy/results_ssh/yw128_pipeline_ssh/trajectory_audit",
+    "training_run_root": "/home/vieo/vieo/fxy_workspace/fxy/results_ssh/yw128_training_ssh",
+    "rl_run_root": "/home/vieo/vieo/fxy_workspace/fxy/results_ssh/yw128_rl_ssh",
+    "test_run_root": "/home/vieo/vieo/fxy_workspace/fxy/results_ssh/yw128_testing_ssh"
   },
   "models": {
     "qwen25_vl": {
-      "path": "/home/yk/fxy/models/Qwen2.5-VL-7B-Instruct",
+      "path": "/home/vieo/vieo/fxy_workspace/fxy/models/Qwen2.5-VL-7B-Instruct",
       "served_name": "qwen25-vl",
       "architecture": "qwen2_5_vl",
       "runtime_workloads": {
@@ -107,7 +108,7 @@
       "llama_factory_family": "qwen25"
     },
     "rs_eot": {
-      "path": "/home/yk/fxy/models/RS-EoT-7B",
+      "path": "/home/vieo/vieo/fxy_workspace/fxy/models/RS-EoT-7B",
       "served_name": "rs-eot",
       "architecture": "qwen2_5_vl",
       "runtime_workloads": {
@@ -122,7 +123,7 @@
       "llama_factory_family": "qwen25"
     },
     "qwen3_vl_4b": {
-      "path": "/home/yk/fxy/models/Qwen3-VL-4B-Instruct",
+      "path": "/home/vieo/vieo/fxy_workspace/fxy/models/Qwen3-VL-4B-Instruct",
       "served_name": "qwen3-vl-4b",
       "architecture": "qwen3_vl",
       "runtime_workloads": {
@@ -137,7 +138,7 @@
       "llama_factory_family": "qwen3"
     },
     "qwen3_vl_8b": {
-      "path": "/home/yk/fxy/models/Qwen3-VL-8B-Instruct",
+      "path": "/home/vieo/vieo/fxy_workspace/fxy/models/Qwen3-VL-8B-Instruct",
       "served_name": "qwen3-vl-8b",
       "architecture": "qwen3_vl",
       "runtime_workloads": {
@@ -152,7 +153,7 @@
       "llama_factory_family": "qwen3"
     },
     "rs_eot_b1_direct": {
-      "path": "/home/yk/fxy/models/RS-EoT-7B-DOTA128-Direct-Merged",
+      "path": "/home/vieo/vieo/fxy_workspace/fxy/models/RS-EoT-7B-DOTA128-Direct-Merged",
       "served_name": "rs-eot-b1",
       "architecture": "qwen2_5_vl",
       "runtime_workloads": {
@@ -167,7 +168,7 @@
       "llama_factory_family": "qwen25"
     },
     "rs_eot_b2_socratic": {
-      "path": "/home/yk/fxy/models/RS-EoT-7B-DOTA128-Socratic-Merged",
+      "path": "/home/vieo/vieo/fxy_workspace/fxy/models/RS-EoT-7B-DOTA128-Socratic-Merged",
       "served_name": "rs-eot-b2",
       "architecture": "qwen2_5_vl",
       "runtime_workloads": {
@@ -182,7 +183,7 @@
       "llama_factory_family": "qwen25"
     },
     "rs_eot_rl_grounding": {
-      "path": "/home/yk/fxy/models/RS-EoT-7B-DOTA128-RL-Grounding",
+      "path": "/home/vieo/vieo/fxy_workspace/fxy/models/RS-EoT-7B-DOTA128-RL-Grounding",
       "served_name": "rs-eot-rl-grounding",
       "architecture": "qwen2_5_vl",
       "runtime_workloads": {
@@ -197,7 +198,7 @@
       "llama_factory_family": "qwen25"
     },
     "qwen3_vl_2b": {
-      "path": "/home/yk/fxy/models/Qwen3-VL-2B-Instruct",
+      "path": "/home/vieo/vieo/fxy_workspace/fxy/models/Qwen3-VL-2B-Instruct",
       "served_name": "qwen3-vl-2b",
       "architecture": "qwen3_vl",
       "runtime_workloads": {
@@ -214,13 +215,13 @@
   },
   "agents": {
     "reasoner": {
-      "model_path": "/home/yk/fxy/models/Qwen3-VL-8B-Instruct",
+      "model_path": "/home/vieo/vieo/fxy_workspace/fxy/models/Qwen3-VL-8B-Instruct",
       "served_name": "local-reasoner",
       "base_url": "http://127.0.0.1:8001/v1",
       "host": "127.0.0.1",
       "port": 8001,
       "gpu": 0,
-      "gpu_memory_utilization": 0.8,
+      "gpu_memory_utilization": 0.46,
       "max_model_len": 12288,
       "max_num_seqs": 2,
       "max_tokens": 896,
@@ -228,7 +229,7 @@
       "is_multimodal": false
     },
     "perceiver": {
-      "model_path": "/home/yk/fxy/models/Qwen3-VL-8B-Instruct",
+      "model_path": "/home/vieo/vieo/fxy_workspace/fxy/models/Qwen3-VL-8B-Instruct",
       "served_name": "local-perceiver",
       "base_url": "http://127.0.0.1:8002/v1",
       "host": "127.0.0.1",
@@ -242,13 +243,13 @@
       "is_multimodal": true
     },
     "verifier": {
-      "model_path": "/home/yk/fxy/models/Qwen3-VL-8B-Instruct",
+      "model_path": "/home/vieo/vieo/fxy_workspace/fxy/models/Qwen3-VL-8B-Instruct",
       "served_name": "local-verifier",
       "base_url": "http://127.0.0.1:8003/v1",
       "host": "127.0.0.1",
       "port": 8003,
-      "gpu": 2,
-      "gpu_memory_utilization": 0.8,
+      "gpu": 0,
+      "gpu_memory_utilization": 0.39,
       "max_model_len": 4096,
       "max_num_seqs": 2,
       "max_tokens": 256,
@@ -357,10 +358,10 @@
     "min_optimizer_steps": 50,
     "bf16": true,
     "gradient_checkpointing": true,
-    "b1_adapter_output": "/home/yk/fxy/results4.3.3/dota128_training/b1_direct_lora",
-    "b2_adapter_output": "/home/yk/fxy/results4.3.3/dota128_training/b2_socratic_lora",
-    "b1_merged_output": "/home/yk/fxy/models/RS-EoT-7B-DOTA128-Direct-Merged",
-    "b2_merged_output": "/home/yk/fxy/models/RS-EoT-7B-DOTA128-Socratic-Merged",
+    "b1_adapter_output": "/home/vieo/vieo/fxy_workspace/fxy/results_ssh/yw128_training/b1_direct_lora",
+    "b2_adapter_output": "/home/vieo/vieo/fxy_workspace/fxy/results_ssh/yw128_training/b2_socratic_lora",
+    "b1_merged_output": "/home/vieo/vieo/fxy_workspace/fxy/models/RS-EoT-7B-DOTA128-Direct-Merged",
+    "b2_merged_output": "/home/vieo/vieo/fxy_workspace/fxy/models/RS-EoT-7B-DOTA128-Socratic-Merged",
     "image_max_pixels": 802816,
     "require_agents_stopped": true,
     "overwrite_cache": true,
@@ -431,9 +432,9 @@
   },
   "official_socratic": {
     "enabled": true,
-    "input_parquet_dir": "/home/yk/fxy/results4.3.3/dota128_pipeline4.3.3/official_socratic/input",
-    "raw_output_dir": "/home/yk/fxy/results4.3.3/dota128_pipeline4.3.3/official_socratic/raw",
-    "postproc_output_dir": "/home/yk/fxy/results4.3.3/dota128_pipeline4.3.3/official_socratic/postproc",
+    "input_parquet_dir": "/home/vieo/vieo/fxy_workspace/fxy/results_ssh/yw128_pipeline_ssh/official_socratic/input",
+    "raw_output_dir": "/home/vieo/vieo/fxy_workspace/fxy/results_ssh/yw128_pipeline_ssh/official_socratic/raw",
+    "postproc_output_dir": "/home/vieo/vieo/fxy_workspace/fxy/results_ssh/yw128_pipeline_ssh/official_socratic/postproc",
     "concurrency": 2,
     "max_loop": 8,
     "current_task_samples": 999999999,
@@ -492,6 +493,6 @@
     "fail_on_train_val_overlap": true
   },
   "experiment": {
-    "base_settings": "/home/yk/Asking_like_Socrates-main/re_scripts/settings.json"
+    "base_settings": "/home/vieo/vieo/fxy_workspace/Asking_like_Socrates-main/re_scripts/settings.json"
   }
 }

@@ -64,7 +64,7 @@ Path(sys.argv[2]).write_text('\n'.join(lines)+'\n',encoding='utf-8')
 PY
   echo "[INFO] merging $name: adapter=$adapter -> $merged"
   cd "$LF"
-  "$LLAMAFACTORY_CLI" export "$cfg"
+  llamafactory_cli export "$cfg"
   [[ -f "$merged/config.json" ]] || { echo "[FAIL] merged config missing: $merged/config.json" >&2; return 3; }
   echo "[OK] $name merged: $merged"
 }

@@ -1,0 +1,498 @@
+{
+  "project": {
+    "project_root": "/home/vieo/vieo/fxy_workspace/Asking_like_Socrates-main",
+    "re_scripts_root": "/home/vieo/vieo/fxy_workspace/Asking_like_Socrates-main/re_scripts",
+    "llama_factory_dir": "/home/vieo/vieo/fxy_workspace/Asking_like_Socrates-main/LLaMA-Factory",
+    "easy_r1_dir": "/home/vieo/vieo/fxy_workspace/Asking_like_Socrates-main/EasyR1",
+    "seed": 42,
+    "llama_factory_dirs": {
+      "qwen25": "/home/vieo/vieo/fxy_workspace/Asking_like_Socrates-main/LLaMA-Factory",
+      "qwen3": "/home/vieo/vieo/fxy_workspace/Asking_like_Socrates-main/LLaMA-Factory"
+    }
+  },
+  "runtime": {
+    "conda_executable": "/home/vieo/anaconda3/bin/conda",
+    "workloads": {
+      "data": {
+        "conda_env": "als_sft",
+        "python": "/home/vieo/anaconda3/envs/als_sft/bin/python",
+        "allow_fallback_to_current": false,
+        "required_module": "datasets"
+      },
+      "sft": {
+        "conda_env": "als_sft",
+        "python": "/home/vieo/anaconda3/envs/als_sft/bin/python",
+        "allow_fallback_to_current": false,
+        "required_module": "llamafactory"
+      },
+      "vllm": {
+        "conda_env": "als_vllm",
+        "python": "/home/vieo/anaconda3/envs/als_vllm/bin/python",
+        "allow_fallback_to_current": false,
+        "required_module": "vllm"
+      },
+      "rl": {
+        "conda_env": "",
+        "python": "/home/vieo/anaconda3/bin/python",
+        "allow_fallback_to_current": false,
+        "required_module": "verl"
+      },
+      "qwen3_sft": {
+        "conda_env": "als_sft",
+        "python": "/home/vieo/anaconda3/envs/als_sft/bin/python",
+        "required_module": "llamafactory",
+        "allow_fallback_to_current": false
+      },
+      "qwen3_vllm": {
+        "conda_env": "als_vllm",
+        "python": "/home/vieo/anaconda3/envs/als_vllm/bin/python",
+        "required_module": "vllm",
+        "allow_fallback_to_current": false
+      }
+    },
+    "gpu_profiles": {
+      "agents_dual_a6000": {
+        "reasoner_gpu": 0,
+        "perceiver_gpu": 1,
+        "verifier_gpu": 0
+      },
+      "sft_dual_a6000": {
+        "visible_devices": "0,1",
+        "world_size": 2
+      },
+      "eval_single_gpu": {
+        "visible_devices": "3",
+        "gpu_memory_utilization": 0.86,
+        "max_model_len": 12288
+      },
+      "rl_dual_a6000": {
+        "visible_devices": "0,1",
+        "n_gpus_per_node": 2
+      }
+    }
+  },
+  "paths": {
+    "datasets_root": "/home/vieo/vieo/fxy_workspace/fxy/datasets_ssh",
+    "results_root": "/home/vieo/vieo/fxy_workspace/fxy/results_ssh",
+    "models_root": "/home/vieo/vieo/fxy_workspace/fxy/models",
+    "dota128_root": "/home/vieo/vieo/fxy_workspace/fxy/datasets/yw128_scene_disjoint",
+    "dota128_ref_root": "/home/vieo/vieo/fxy_workspace/fxy/datasets_ssh/yw128-Ref_ssh",
+    "dota128_llamafactory_root": "/home/vieo/vieo/fxy_workspace/fxy/datasets_ssh/yw128-llamafactory_ssh",
+    "dota128_rl_root": "/home/vieo/vieo/fxy_workspace/fxy/datasets_ssh/yw128-rl_ssh",
+    "rs_eot4k_llamafactory": "/home/vieo/vieo/fxy_workspace/fxy/datasets/RS-EoT-4K-llamafactory.json",
+    "vrsbench_image_dir": "/home/vieo/vieo/fxy_workspace/fxy/datasets/VRSBench/Images_val",
+    "vrsbench_eval_json": "/home/vieo/vieo/fxy_workspace/fxy/datasets/VRSBench/VRSBench_EVAL_vqa.json",
+    "vrsbench_ref_json": "/home/vieo/vieo/fxy_workspace/fxy/datasets/VRSBench/VRSBench_EVAL_ref.json",
+    "vrsbench_result_jsonl": "/home/vieo/vieo/fxy_workspace/fxy/results/VRSBench_RS-EoT-7B/vrsbench_k5_vllm.jsonl",
+    "pipeline_work_root": "/home/vieo/vieo/fxy_workspace/fxy/results_ssh/yw128_pipeline_ssh",
+    "trajectory_raw_dir": "/home/vieo/vieo/fxy_workspace/fxy/results_ssh/yw128_pipeline_ssh/trajectory_raw",
+    "trajectory_audit_dir": "/home/vieo/vieo/fxy_workspace/fxy/results_ssh/yw128_pipeline_ssh/trajectory_audit",
+    "training_run_root": "/home/vieo/vieo/fxy_workspace/fxy/results_ssh/yw128_training_ssh",
+    "rl_run_root": "/home/vieo/vieo/fxy_workspace/fxy/results_ssh/yw128_rl_ssh",
+    "test_run_root": "/home/vieo/vieo/fxy_workspace/fxy/results_ssh/yw128_testing_ssh"
+  },
+  "models": {
+    "qwen25_vl": {
+      "path": "/home/vieo/vieo/fxy_workspace/fxy/models/Qwen2.5-VL-7B-Instruct",
+      "served_name": "qwen25-vl",
+      "architecture": "qwen2_5_vl",
+      "runtime_workloads": {
+        "vllm": "vllm",
+        "sft": "sft"
+      },
+      "minimum_versions": {
+        "transformers": "4.55.0",
+        "vllm": "0.10.0"
+      },
+      "training_template": "qwen2_vl",
+      "llama_factory_family": "qwen25"
+    },
+    "rs_eot": {
+      "path": "/home/vieo/vieo/fxy_workspace/fxy/models/RS-EoT-7B",
+      "served_name": "rs-eot",
+      "architecture": "qwen2_5_vl",
+      "runtime_workloads": {
+        "vllm": "vllm",
+        "sft": "sft"
+      },
+      "minimum_versions": {
+        "transformers": "4.55.0",
+        "vllm": "0.10.0"
+      },
+      "training_template": "qwen2_vl_thinking",
+      "llama_factory_family": "qwen25"
+    },
+    "qwen3_vl_4b": {
+      "path": "/home/vieo/vieo/fxy_workspace/fxy/models/Qwen3-VL-4B-Instruct",
+      "served_name": "qwen3-vl-4b",
+      "architecture": "qwen3_vl",
+      "runtime_workloads": {
+        "vllm": "qwen3_vllm",
+        "sft": "qwen3_sft"
+      },
+      "minimum_versions": {
+        "transformers": "4.57.0",
+        "vllm": "0.11.0"
+      },
+      "training_template": "qwen3_vl_nothink",
+      "llama_factory_family": "qwen3"
+    },
+    "qwen3_vl_8b": {
+      "path": "/home/vieo/vieo/fxy_workspace/fxy/models/Qwen3-VL-8B-Instruct",
+      "served_name": "qwen3-vl-8b",
+      "architecture": "qwen3_vl",
+      "runtime_workloads": {
+        "vllm": "qwen3_vllm",
+        "sft": "qwen3_sft"
+      },
+      "minimum_versions": {
+        "transformers": "4.57.0",
+        "vllm": "0.11.0"
+      },
+      "training_template": "qwen3_vl_nothink",
+      "llama_factory_family": "qwen3"
+    },
+    "rs_eot_b1_direct": {
+      "path": "/home/vieo/vieo/fxy_workspace/fxy/models/RS-EoT-7B-DOTA128-Direct-Merged",
+      "served_name": "rs-eot-b1",
+      "architecture": "qwen2_5_vl",
+      "runtime_workloads": {
+        "vllm": "vllm",
+        "sft": "sft"
+      },
+      "minimum_versions": {
+        "transformers": "4.55.0",
+        "vllm": "0.10.0"
+      },
+      "training_template": "qwen2_vl_thinking",
+      "llama_factory_family": "qwen25"
+    },
+    "rs_eot_b2_socratic": {
+      "path": "/home/vieo/vieo/fxy_workspace/fxy/models/RS-EoT-7B-DOTA128-Socratic-Merged",
+      "served_name": "rs-eot-b2",
+      "architecture": "qwen2_5_vl",
+      "runtime_workloads": {
+        "vllm": "vllm",
+        "sft": "sft"
+      },
+      "minimum_versions": {
+        "transformers": "4.55.0",
+        "vllm": "0.10.0"
+      },
+      "training_template": "qwen2_vl_thinking",
+      "llama_factory_family": "qwen25"
+    },
+    "rs_eot_rl_grounding": {
+      "path": "/home/vieo/vieo/fxy_workspace/fxy/models/RS-EoT-7B-DOTA128-RL-Grounding",
+      "served_name": "rs-eot-rl-grounding",
+      "architecture": "qwen2_5_vl",
+      "runtime_workloads": {
+        "vllm": "vllm",
+        "sft": "sft"
+      },
+      "minimum_versions": {
+        "transformers": "4.55.0",
+        "vllm": "0.10.0"
+      },
+      "training_template": "qwen2_vl_thinking",
+      "llama_factory_family": "qwen25"
+    },
+    "qwen3_vl_2b": {
+      "path": "/home/vieo/vieo/fxy_workspace/fxy/models/Qwen3-VL-2B-Instruct",
+      "served_name": "qwen3-vl-2b",
+      "architecture": "qwen3_vl",
+      "runtime_workloads": {
+        "vllm": "qwen3_vllm",
+        "sft": "qwen3_sft"
+      },
+      "minimum_versions": {
+        "transformers": "4.57.0",
+        "vllm": "0.11.0"
+      },
+      "training_template": "qwen3_vl_nothink",
+      "llama_factory_family": "qwen3"
+    }
+  },
+  "agents": {
+    "reasoner": {
+      "model_path": "/home/vieo/vieo/fxy_workspace/fxy/models/Qwen3-VL-8B-Instruct",
+      "served_name": "local-reasoner",
+      "base_url": "http://127.0.0.1:8001/v1",
+      "host": "127.0.0.1",
+      "port": 8001,
+      "gpu": 0,
+      "gpu_memory_utilization": 0.46,
+      "max_model_len": 12288,
+      "max_num_seqs": 2,
+      "max_tokens": 896,
+      "temperature": 0.0,
+      "is_multimodal": false
+    },
+    "perceiver": {
+      "model_path": "/home/vieo/vieo/fxy_workspace/fxy/models/Qwen3-VL-8B-Instruct",
+      "served_name": "local-perceiver",
+      "base_url": "http://127.0.0.1:8002/v1",
+      "host": "127.0.0.1",
+      "port": 8002,
+      "gpu": 1,
+      "gpu_memory_utilization": 0.8,
+      "max_model_len": 8192,
+      "max_num_seqs": 2,
+      "max_tokens": 512,
+      "temperature": 0.0,
+      "is_multimodal": true
+    },
+    "verifier": {
+      "model_path": "/home/vieo/vieo/fxy_workspace/fxy/models/Qwen3-VL-8B-Instruct",
+      "served_name": "local-verifier",
+      "base_url": "http://127.0.0.1:8003/v1",
+      "host": "127.0.0.1",
+      "port": 8003,
+      "gpu": 0,
+      "gpu_memory_utilization": 0.39,
+      "max_model_len": 4096,
+      "max_num_seqs": 2,
+      "max_tokens": 256,
+      "temperature": 0.0,
+      "is_multimodal": false
+    }
+  },
+  "data_conversion": {
+    "splits": [
+      "train",
+      "val"
+    ],
+    "coordinate_target": "norm1000_obb",
+    "coordinate_storage": [
+      "pixel_obb",
+      "norm100_obb",
+      "norm1000_obb",
+      "norm1000_hbb"
+    ],
+    "semantic_mode": "deterministic",
+    "use_scene_description": false,
+    "scene_description_max_tokens": 120,
+    "max_refs_per_class_per_image": 8,
+    "max_objects_per_image_for_agent": 24,
+    "max_objects_per_direct_sample": 12,
+    "direct_negative_classes_per_image": 2,
+    "train_agent_use_socratic_subset": true,
+    "classification_focus_expansion": 2.5,
+    "classification_focus_min_span_norm1000": 80.0,
+    "socratic_min_short_side_norm1000": 20.0,
+    "socratic_min_area_ratio": 0.0002,
+    "allow_ordinal_fallback": false,
+    "require_unique_reference": true,
+    "build_classification_tasks": true,
+    "build_grounding_tasks": true,
+    "build_detection_tasks": true,
+    "agent_input_shuffle": "stratified_round_robin"
+  },
+  "trajectory": {
+    "engine": "official_socratic_agent",
+    "prompt_profile": "obb_grounding_v3",
+    "max_reasoning_rounds": 6,
+    "force_final_on_last_round": true,
+    "min_perception_rounds_strict": 2,
+    "allow_single_round_if_verified": true,
+    "single_round_min_verifier_score": 0.85,
+    "strict_min_verifier_score": 0.7,
+    "concurrency": 2,
+    "resume": true,
+    "teacher_force_final_answer": true,
+    "reject_on_format_repair": false,
+    "max_repair_attempts": 3,
+    "require_perceiver_original_context": true,
+    "question_similarity_threshold": 0.95,
+    "debug_min_grounding_strict_rate": 0.3,
+    "debug_min_classification_strict_rate": 0.7,
+    "geometry_gate": {
+      "enabled": true,
+      "classification_alias_mapping": true,
+      "min_hbb_iou_for_teacher_force": 0.15,
+      "require_center_in_expanded_gt": true,
+      "expanded_gt_ratio": 0.35,
+      "pass_if_iou_or_center": false
+    },
+    "min_perception_rounds_by_task": {
+      "ref_grounding_obb": 2,
+      "ref_classification": 1
+    },
+    "min_strict_grounding_samples": 20,
+    "min_strict_classification_samples": 20,
+    "enable_perceiver_focus_crop": true,
+    "strict_require_valid_obb": true,
+    "strict_reject_focus_copy": true,
+    "strict_max_pred_gt_hbb_area_ratio": 6.0,
+    "focus_crop_long_side": 1024,
+    "focus_crop_padding_ratio": 0.02,
+    "classification_crop_only_max_area": 0.0,
+    "max_crop_coordinate_coverage": 0.94,
+    "grounding_coordinate_crop_only": true,
+    "reject_unsolicited_coordinates": true,
+    "perceiver_fail_closed": true,
+    "map_crop_coordinates": true,
+    "deterministic_structured_verifier": true,
+    "reasoner_compact_max_chars": 9000,
+    "classification_use_full_and_crop": true,
+    "classification_reject_class_claims": false,
+    "reasoner_fail_closed": true
+  },
+  "training": {
+    "base_model_key": "rs_eot",
+    "template": "auto",
+    "finetuning_type": "lora",
+    "loss_mode": "standard_causal_lm",
+    "lora_rank": 16,
+    "lora_alpha": 32,
+    "lora_dropout": 0.05,
+    "freeze_vision_tower": true,
+    "freeze_multi_modal_projector": false,
+    "cutoff_len": 8192,
+    "epochs": 5.0,
+    "learning_rate": 3e-05,
+    "per_device_train_batch_size": 1,
+    "per_device_eval_batch_size": 1,
+    "gradient_accumulation_steps": 4,
+    "world_size": 2,
+    "min_optimizer_steps": 50,
+    "bf16": true,
+    "gradient_checkpointing": true,
+    "b1_adapter_output": "/home/vieo/vieo/fxy_workspace/fxy/results_ssh/yw128_training/b1_direct_lora",
+    "b2_adapter_output": "/home/vieo/vieo/fxy_workspace/fxy/results_ssh/yw128_training/b2_socratic_lora",
+    "b1_merged_output": "/home/vieo/vieo/fxy_workspace/fxy/models/RS-EoT-7B-DOTA128-Direct-Merged",
+    "b2_merged_output": "/home/vieo/vieo/fxy_workspace/fxy/models/RS-EoT-7B-DOTA128-Socratic-Merged",
+    "image_max_pixels": 802816,
+    "require_agents_stopped": true,
+    "overwrite_cache": true,
+    "auto_stop_agents_before_sft": true,
+    "dataset_registry_mode": "self_contained_dataset_dir"
+  },
+  "evaluation": {
+    "model_keys": [
+      "qwen25_vl",
+      "rs_eot",
+      "qwen3_vl_4b",
+      "rs_eot_b1_direct",
+      "rs_eot_b2_socratic"
+    ],
+    "protocols": {
+      "dota_class_conditioned": {
+        "k": 1,
+        "temperature": 0.0,
+        "top_p": 1.0,
+        "max_tokens": 2048,
+        "coordinate_mode": "normalized_0_1000"
+      },
+      "dota_all_class_stress": {
+        "k": 1,
+        "temperature": 0.0,
+        "top_p": 1.0,
+        "max_tokens": 8192,
+        "coordinate_mode": "normalized_0_1000"
+      },
+      "ref_grounding": {
+        "k": 1,
+        "temperature": 0.0,
+        "top_p": 1.0,
+        "max_tokens": 1536,
+        "coordinate_mode": "normalized_0_1000"
+      },
+      "ref_grounding_k5": {
+        "k": 5,
+        "temperature": 0.35,
+        "top_p": 0.9,
+        "max_tokens": 1536,
+        "coordinate_mode": "normalized_0_1000"
+      },
+      "ref_classification": {
+        "k": 1,
+        "temperature": 0.0,
+        "top_p": 1.0,
+        "max_tokens": 1536
+      },
+      "vrsbench_vqa_k5": {
+        "k": 5,
+        "temperature": 0.95,
+        "top_p": 0.7,
+        "max_tokens": 2048
+      }
+    },
+    "iou_thresholds": [
+      0.5,
+      0.7,
+      0.75
+    ],
+    "confidence_threshold": 0.0,
+    "dota_max_objects_per_roi": 12,
+    "save_visualizations": true,
+    "visualization_limit": 200,
+    "semantic_vqa_judge": "local_rule",
+    "fail_on_incomplete": true
+  },
+  "official_socratic": {
+    "enabled": true,
+    "input_parquet_dir": "/home/vieo/vieo/fxy_workspace/fxy/results_ssh/yw128_pipeline_ssh/official_socratic/input",
+    "raw_output_dir": "/home/vieo/vieo/fxy_workspace/fxy/results_ssh/yw128_pipeline_ssh/official_socratic/raw",
+    "postproc_output_dir": "/home/vieo/vieo/fxy_workspace/fxy/results_ssh/yw128_pipeline_ssh/official_socratic/postproc",
+    "concurrency": 2,
+    "max_loop": 8,
+    "current_task_samples": 999999999,
+    "resume": true,
+    "verify_inst": "For DOTA classification, natural subtypes such as bus/truck/trailer must be mapped to the canonical DOTA class large vehicle, and car/sedan/SUV to small vehicle. For grounding, the target identity and canonical class must match. Numeric equality is not required at trajectory synthesis time if the final answer will be teacher-forced, but reject a different object or image region.",
+    "image_meta_pre": "The provided imagery is a remote sensing RGB image. Coordinates in the task use the explicitly stated convention.\n",
+    "reuse_official_generation_py": true,
+    "reuse_official_postproc_py": true,
+    "local_adapter_only": true
+  },
+  "reinforcement_learning": {
+    "enabled": false,
+    "framework": "EasyR1",
+    "base_model_key": "rs_eot_b2_socratic",
+    "stage1": {
+      "task": "grounding",
+      "dataset": "dota128_ref_rl",
+      "coordinate_target": "norm1000_hbb",
+      "reward_profile": "hbb_iou_class_format_v1",
+      "algorithm": "grpo",
+      "n_gpus_per_node": 2,
+      "global_batch_size": 32,
+      "micro_batch_size_per_device_for_experience": 1,
+      "rollout_tensor_parallel_size": 1,
+      "rollout_gpu_memory_utilization": 0.42,
+      "max_prompt_length": 4096,
+      "max_response_length": 1536,
+      "training_strategy": "fsdp_full_offload",
+      "rollout_batch_size": 16,
+      "actor_global_batch_size": 8,
+      "rollout_n": 4,
+      "micro_batch_size_per_device_for_update": 1,
+      "total_epochs": 3,
+      "learning_rate": 1e-06,
+      "min_pixels": 65536,
+      "max_pixels": 262144,
+      "experimental_lora_requires_upstream_upgrade": true
+    },
+    "stage2": {
+      "task": "vqa",
+      "dataset": "vrsbench_vqa_rl",
+      "algorithm": "grpo",
+      "enabled": false
+    },
+    "experimental_obb_reward": {
+      "enabled": false,
+      "reward_profile": "obb_iou_class_format_v1"
+    }
+  },
+  "data_quality": {
+    "audit_mode": "warn",
+    "invalid_object_policy": "drop",
+    "min_polygon_area": 1.0,
+    "require_scene_disjoint_splits": true,
+    "allow_val_only_classes": true,
+    "fail_on_train_val_overlap": true
+  },
+  "experiment": {
+    "base_settings": "/home/vieo/vieo/fxy_workspace/Asking_like_Socrates-main/re_scripts/settings.json"
+  }
+}

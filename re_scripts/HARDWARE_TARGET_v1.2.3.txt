@@ -1,0 +1,11 @@
+Hardware target supplied by user on 2026-08-04
+GPU 0: NVIDIA RTX A6000, 49140 MiB
+GPU 1: NVIDIA RTX A6000, 49140 MiB
+GPU 2: NVIDIA RTX A6000, 49140 MiB
+GPU 3: NVIDIA RTX A6000, 49140 MiB
+NVIDIA driver: 575.57.08
+
+v1.2.3 topology:
+- B0/B1/B2 7B evaluation: four independent single-GPU replicas, ports 8010-8013.
+- B1/B2 LoRA SFT: four-GPU DDP, effective global batch preserved at 8.
+- Shared 30B Omni: one endpoint on port 8091, tensor parallel size 4.

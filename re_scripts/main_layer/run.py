@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Unified experiment entry point for custom OBB bilingual patch v1.2.2.
+"""Unified experiment entry point for custom OBB bilingual patch v1.2.3.
 
 The main layer is intentionally thin: it materializes a base settings file plus
 one experiment profile, chooses the correct workload Python, records the exact
@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
+RELEASE_REVISION = "1.2.3-r3"
 sys.path.insert(0, str(ROOT / "main_layer"))
 from config import load_json, materialize_settings, resolve_python  # noqa: E402
 from taxonomy import materialize_runtime_taxonomy  # noqa: E402
@@ -56,6 +57,7 @@ PY_COMMANDS: dict[str, tuple[str, str]] = {
     "generate-b1-direct-config": ("sft", "train_layer/02d_generate_b1_direct_standalone_config.py"),
     "validate-b1-direct-contract": ("sft", "train_layer/02e_validate_b1_direct_contract.py"),
     "register-b1-direct-model": ("data", "tools/register_b1_direct_model.py"),
+    "register-b2-model": ("data", "tools/register_b2_model.py"),
     "omni-preflight": ("vllm", "tools/check_qwen3_omni_4gpu.py"),
     "materialize-shared-omni-agents": ("data", "tools/materialize_shared_omni_agent_settings.py"),
     "check-shared-omni-endpoint": ("data", "tools/check_shared_omni_endpoint.py"),
@@ -79,6 +81,7 @@ SHELL_COMMANDS = {
     "start-eval": "test_layer/start_eval_model.sh",
     "stop-eval": "test_layer/stop_eval_model.sh",
     "test-matrix": "main_layer/run_test_matrix.sh",
+    "test-matrix-replica4": "main_layer/run_test_matrix_replica4.sh",
     "rl-stage1": "train_layer/rl/03_launch_stage1_grounding.sh",
     "train-d1": "train_layer/03c_train_d1_direct_only.sh",
     "merge-d1": "train_layer/05c_export_d1_direct_only.sh",
@@ -126,6 +129,7 @@ def _ensure_agent_inputs(settings: dict[str, Any], materialized: Path) -> None:
         )
 
 def main() -> None:
+    print(f"[MAIN RUNNER] release={RELEASE_REVISION} file={Path(__file__).resolve()}")
     choices = sorted(set(PY_COMMANDS) | set(SHELL_COMMANDS) | {"show-config"})
     ap = argparse.ArgumentParser(
         description="OBB × Asking Like Socrates experiment runner"

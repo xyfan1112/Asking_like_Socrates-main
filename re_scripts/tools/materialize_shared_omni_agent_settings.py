@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Point three logical Socratic roles at one external Qwen3-Omni TP=4 server.
+"""Point three logical Socratic roles at one external Qwen3-Omni configurable-TP server.
 
 The generated settings must not be passed to the ordinary ``start-agents``
 launcher because that launcher starts three independent model processes.  This
@@ -33,8 +33,8 @@ def main() -> int:
         raise FileNotFoundError(source)
     if args.full_concurrency < 1:
         raise ValueError("--full-concurrency must be >=1")
-    if args.tensor_parallel_size != 4:
-        raise ValueError("v1.2.2 shared Omni topology requires tensor parallel size 4")
+    if args.tensor_parallel_size < 1:
+        raise ValueError("--tensor-parallel-size must be >=1")
 
     cfg = json.loads(source.read_text(encoding="utf-8"))
     if not isinstance(cfg, dict):
@@ -60,9 +60,9 @@ def main() -> int:
         role_cfg["host"] = parsed.hostname
         role_cfg["port"] = port
         role_cfg["served_name"] = args.served_name
-        role_cfg["deployment_mode"] = "shared_external_omni_tp4_no_tts"
+        role_cfg["deployment_mode"] = f"shared_external_omni_tp{args.tensor_parallel_size}_no_tts"
         role_cfg["physical_weight_copy"] = 1
-        role_cfg["tensor_parallel_size"] = 4
+        role_cfg["tensor_parallel_size"] = args.tensor_parallel_size
         # Informational only. Ordinary start-agents must not consume this file.
         role_cfg["gpu"] = 0
         if args.model_path:
@@ -84,8 +84,8 @@ def main() -> int:
         "logical_roles": ["reasoner", "perceiver", "verifier"],
         "physical_servers": 1,
         "physical_weight_copies": 1,
-        "tensor_parallel_size": 4,
-        "all_four_gpus_per_request": True,
+        "tensor_parallel_size": args.tensor_parallel_size,
+        "all_visible_tp_gpus_per_request": True,
         "debug_concurrency": 1,
         "full_concurrency": args.full_concurrency,
         "original_full_concurrency": original_concurrency,
@@ -94,12 +94,12 @@ def main() -> int:
     }
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(out, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print("[SHARED OMNI TP4 SETTINGS] PASS")
+    print("[SHARED OMNI SETTINGS] PASS")
     print(" source             =", source)
     print(" output             =", output)
     print(" endpoint           =", base_url)
     print(" served_name        =", args.served_name)
-    print(" tensor_parallel    = 4")
+    print(" tensor_parallel    =", args.tensor_parallel_size)
     print(" physical_servers   = 1")
     print(" physical_weights   = 1")
     print(" full_concurrency   =", args.full_concurrency)

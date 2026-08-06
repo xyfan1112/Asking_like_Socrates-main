@@ -112,6 +112,9 @@ PROFILES: Dict[str, Dict[str, str]] = {
     "obb_grounding_v3": dict(_ACTIVE),
     "obb_grounding_no_alias": dict(_ACTIVE),
     "custom_obb_bilingual_v1": dict(_ACTIVE),
+    # v1.2.3 keeps the same scientific prompt content; this alias records the
+    # release provenance without silently changing prompt semantics.
+    "custom_obb_bilingual_v1_2_3": dict(_ACTIVE),
     "single_glance_ablation": {
         "reasoner": ("最多询问一个宽泛视觉问题，然后作答。" if _LANG == "zh" else "Ask at most one broad visual question, then answer."),
         "perceiver": ("只回答该视觉问题。" if _LANG == "zh" else "Answer only that visual question."),

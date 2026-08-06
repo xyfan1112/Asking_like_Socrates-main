@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -18,6 +19,10 @@ from common import (  # noqa: E402
     parse_obb_output_status, read_jsonl, settings_from_cli,
 )
 from eval_common import chat_once, check_server, protocol, write_manifest  # noqa: E402
+
+
+def stable_shard(value: str, num_shards: int) -> int:
+    return int.from_bytes(hashlib.sha256(value.encode("utf-8")).digest()[:8], "big") % num_shards
 
 
 def _first(obj: dict, *keys):
@@ -110,7 +115,11 @@ def main() -> None:
     ap.add_argument("--max-samples", type=int, default=0)
     ap.add_argument("--output")
     ap.add_argument("--fresh", action="store_true")
+    ap.add_argument("--num-shards", type=int, default=1)
+    ap.add_argument("--shard-index", type=int, default=0)
     args = ap.parse_args()
+    if args.num_shards < 1 or not 0 <= args.shard_index < args.num_shards:
+        raise SystemExit("invalid shard arguments")
     settings = load_settings(settings_from_cli(__file__, args.settings))
     model = settings["models"][args.model_key]
     cfg = protocol(settings, args.protocol)
@@ -119,6 +128,7 @@ def main() -> None:
     samples = load_dota(settings, args.split) if args.dataset == "dota_ref" else load_vrsbench(settings)
     if args.max_samples:
         samples = samples[: args.max_samples]
+    samples = [sample for sample in samples if stable_shard(str(sample["id"]), args.num_shards) == args.shard_index]
     output = Path(args.output) if args.output else Path(settings["paths"]["test_run_root"]) / "ref_grounding" / args.dataset / args.model_key / f"{args.split}_{args.protocol}_k{k}.jsonl"
     output.parent.mkdir(parents=True, exist_ok=True)
     if args.fresh:
@@ -176,7 +186,8 @@ def main() -> None:
             print(f"[{index}/{len(samples)}] run={run_id} parsed={pred_hbb is not None} error={bool(response['error'])}")
 
     manifest = {"dataset": args.dataset, "model_key": args.model_key, "split": args.split, "protocol": args.protocol, "k": k,
-                "questions": len(samples), "expected_runs": len(samples)*k, "output": str(output), "settings_protocol": cfg}
+                "questions": len(samples), "expected_runs": len(samples)*k, "output": str(output), "settings_protocol": cfg,
+                "num_shards": args.num_shards, "shard_index": args.shard_index}
     write_manifest(output.with_suffix(".manifest.json"), manifest)
     print(json.dumps(manifest, ensure_ascii=False, indent=2))
 

@@ -38,5 +38,6 @@
     "GT-derived coarse focus regions must be disclosed in experimental reporting",
     "Qwen3-VL and EasyR1 paths remain optional and require separate runtime verification"
   ],
-  "summary": "Prevent target-context loss in Socratic generation and enforce semantic-reference, non-repetition, classification-consistency, visibility, and dual geometry quality gates before B2 data can be produced."
+  "summary": "Prevent target-context loss in Socratic generation and enforce semantic-reference, non-repetition, classification-consistency, visibility, and dual geometry quality gates before B2 data can be produced.",
+  "omni_direct_patch": "clean-routing-1"
 }

@@ -26,13 +26,9 @@ PY
   SFT_TEMPLATE=${_SFT_CFG[3]}
   SFT_BIN_DIR=$(dirname "$SFT_PYTHON")
   LLAMAFACTORY_CLI="$SFT_BIN_DIR/llamafactory-cli"
+  LLAMAFACTORY_CLI_MODE=""
   if [[ ! -x "$SFT_PYTHON" ]]; then
     echo "[FAIL] SFT Python invalid: $SFT_PYTHON" >&2; return 2
-  fi
-  if [[ ! -x "$LLAMAFACTORY_CLI" ]]; then
-    echo "[FAIL] llamafactory-cli not found beside SFT Python: $LLAMAFACTORY_CLI" >&2
-    echo "[HINT] Qwen3-VL should use a separate qwen3_sft environment and a current LLaMA-Factory checkout." >&2
-    return 2
   fi
   if ! "$SFT_PYTHON" - <<'PYENV'
 import llamafactory
@@ -48,26 +44,59 @@ print(
 PYENV
   then
     echo "[FAIL] SFT environment cannot import llamafactory/torch/transformers: $SFT_PYTHON" >&2
+    echo "[HINT] Do not trust the activated environment name. Test the exact interpreter:" >&2
+    echo "       $SFT_PYTHON -c 'import llamafactory,torch,transformers'" >&2
+    echo "       $SFT_PYTHON -m pip list" >&2
+    echo "[HINT] If bin/pip says required file not found after migration, its shebang still points to the old host path; rebuild with conda-pack/conda-unpack." >&2
+    return 2
+  fi
+  # Prefer the exact interpreter over console-script shebangs. This remains
+  # valid after conda-pack/conda-unpack even when bin/llamafactory-cli or pip
+  # still contains the source host path.
+  if "$SFT_PYTHON" -c 'import llamafactory.cli' >/dev/null 2>&1; then
+    LLAMAFACTORY_CLI_MODE="python_module"
+  elif [[ -x "$LLAMAFACTORY_CLI" ]]; then
+    LLAMAFACTORY_CLI_MODE="console_script"
+  else
+    echo "[FAIL] Neither python -m llamafactory.cli nor $LLAMAFACTORY_CLI is available." >&2
     return 2
   fi
   CUDA_DEVICES=$("$SFT_PYTHON" - "$settings" <<'PY'
 import json,sys
 s=json.load(open(sys.argv[1],encoding='utf-8'))
-print(s.get('runtime',{}).get('gpu_profiles',{}).get('sft_dual_a6000',{}).get('visible_devices','0,1'))
+profiles=s.get('runtime',{}).get('gpu_profiles',{})
+p=profiles.get('sft_four_a6000') or profiles.get('sft_dual_a6000') or {}
+print(p.get('visible_devices','0,1,2,3'))
 PY
 )
   WORLD_SIZE=$("$SFT_PYTHON" - "$settings" <<'PY'
 import json,sys
 s=json.load(open(sys.argv[1],encoding='utf-8'))
-print(s['training'].get('world_size',2))
+profiles=s.get('runtime',{}).get('gpu_profiles',{})
+p=profiles.get('sft_four_a6000') or profiles.get('sft_dual_a6000') or {}
+print(p.get('world_size',s['training'].get('world_size',4)))
 PY
 )
   echo "[INFO] SFT workload: $SFT_WORKLOAD"
   echo "[INFO] SFT Python: $SFT_PYTHON"
   echo "[INFO] LLaMA-Factory dir: $LLAMA_FACTORY_DIR"
-  echo "[INFO] LLaMA-Factory CLI: $LLAMAFACTORY_CLI"
+  echo "[INFO] LLaMA-Factory CLI mode: $LLAMAFACTORY_CLI_MODE (console_script=$LLAMAFACTORY_CLI)"
   echo "[INFO] template: $SFT_TEMPLATE"
+  local visible_count
+  visible_count=$(awk -F, '{print NF}' <<<"$CUDA_DEVICES")
+  if [[ "$visible_count" -ne "$WORLD_SIZE" ]]; then
+    echo "[FAIL] visible GPU count=$visible_count but world_size=$WORLD_SIZE" >&2
+    return 2
+  fi
   echo "[INFO] CUDA_VISIBLE_DEVICES: $CUDA_DEVICES; world_size=$WORLD_SIZE"
+}
+
+llamafactory_cli() {
+  if [[ "${LLAMAFACTORY_CLI_MODE:-}" == "python_module" ]]; then
+    "$SFT_PYTHON" -m llamafactory.cli "$@"
+  else
+    "$LLAMAFACTORY_CLI" "$@"
+  fi
 }
 
 ensure_agents_stopped_for_sft() {

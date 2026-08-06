@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
-set -euo pipefail
+# 兼容文件名保留为 manage_omni_tp4.sh；实现已改为可配置TP，不再固定四卡。
+set -Eeuo pipefail
 HERE=$(cd "$(dirname "$0")/.." && pwd)
 source "$HERE/commands/user_config.sh"
 
-RUNTIME_DIR=${OMNI_RUNTIME_DIR:-"$ZH_OUTPUT_ROOT/omni_tp4_service"}
+ACTIVE_ROOT="$EN_OUTPUT_ROOT"
+[[ "${RUN_LANG:-en}" == "zh" ]] && ACTIVE_ROOT="$ZH_OUTPUT_ROOT"
+if [[ -z "${OMNI_SERVED_NAME:-}" ]]; then
+  OMNI_SERVED_NAME=$(basename "${OMNI_MODELSCOPE_ID:-qwen3-omni}" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9._-' '-' | sed 's/^-*//; s/-*$//')
+  export OMNI_SERVED_NAME
+fi
+RUNTIME_DIR=${OMNI_RUNTIME_DIR:-"$ACTIVE_ROOT/omni_shared_service"}
 PID_FILE="$RUNTIME_DIR/server.pid"
 CMD_FILE="$RUNTIME_DIR/server.command.txt"
 LOG_FILE="$RUNTIME_DIR/server.log"
@@ -11,12 +18,18 @@ mkdir -p "$RUNTIME_DIR"
 
 fail() { echo "[FAIL] $*" >&2; exit 2; }
 
-resolve_vllm() {
+validate_runtime() {
   [[ -x "${OMNI_PYTHON:-}" ]] || fail "OMNI_PYTHON不可执行: ${OMNI_PYTHON:-空}"
-  local bin
-  bin="$(dirname "$OMNI_PYTHON")/vllm"
-  [[ -x "$bin" ]] || fail "找不到vllm命令: $bin"
-  printf '%s\n' "$bin"
+  "$OMNI_PYTHON" -c 'import vllm,torch; print("[PASS] vllm",vllm.__version__,"torch",torch.__version__)' \
+    || fail "OMNI_PYTHON无法导入vllm/torch"
+
+  local -a visible=()
+  IFS=',' read -r -a visible <<< "${OMNI_VISIBLE_GPUS:-}"
+  local count=0 item
+  for item in "${visible[@]}"; do [[ -n "${item// /}" ]] && ((count+=1)); done
+  [[ "${OMNI_TP_SIZE:-0}" =~ ^[0-9]+$ ]] || fail "OMNI_TP_SIZE必须是正整数"
+  (( OMNI_TP_SIZE >= 1 )) || fail "OMNI_TP_SIZE必须>=1"
+  (( count >= OMNI_TP_SIZE )) || fail "OMNI_VISIBLE_GPUS=$OMNI_VISIBLE_GPUS只有$count张卡，但OMNI_TP_SIZE=$OMNI_TP_SIZE"
 }
 
 is_running() {
@@ -42,7 +55,7 @@ while time.time()<deadline:
             data=json.loads(r.read())
         ids=[str(x.get('id')) for x in data.get('data',[])]
         if expected in ids:
-            print('[PASS] Omni TP4 endpoint ready:', ids)
+            print('[PASS] Omni endpoint ready:', ids)
             raise SystemExit(0)
         last=f'served name not ready: {ids}'
     except Exception as exc:
@@ -54,34 +67,37 @@ PY
 }
 
 start_server() {
+  validate_runtime
   [[ -d "$OMNI_MODEL_PATH" ]] || fail "模型目录不存在: $OMNI_MODEL_PATH"
-  [[ "${OMNI_TP_SIZE:-}" == "4" ]] || fail "v1.2.2固定要求OMNI_TP_SIZE=4，当前=${OMNI_TP_SIZE:-空}"
+  [[ -f "$OMNI_MODEL_PATH/config.json" ]] || fail "模型缺少config.json: $OMNI_MODEL_PATH/config.json"
   if is_running; then
     echo "[INFO] Omni服务已运行，PID=$(cat "$PID_FILE")"
     exit 0
   fi
   rm -f "$PID_FILE"
 
-  local vllm_bin help_text profile util seqs eager
-  vllm_bin=$(resolve_vllm)
-  help_text=$($vllm_bin serve --help 2>&1 || true)
-  [[ "$help_text" == *"--tensor-parallel-size"* ]] || fail "当前vLLM不支持--tensor-parallel-size"
+  local help_text profile util seqs eager
+  help_text=$("$OMNI_PYTHON" -m vllm.entrypoints.cli.main serve --help=all 2>&1 || true)
+  [[ "$help_text" == *"--tensor-parallel-size"* ]] || fail "当前vLLM CLI未显示--tensor-parallel-size"
+  [[ "$help_text" == *"--max-model-len"* ]] || fail "当前vLLM CLI未显示--max-model-len"
+  [[ "$help_text" == *"--max-num-seqs"* ]] || fail "当前vLLM CLI未显示--max-num-seqs"
+  [[ "$help_text" == *"--gpu-memory-utilization"* ]] || fail "当前vLLM CLI未显示--gpu-memory-utilization"
 
-  profile=${OMNI_PROFILE:-balanced}
+  profile=${OMNI_PROFILE:-safe}
   case "$profile" in
     safe)
-      util=${OMNI_SAFE_GPU_MEMORY_UTILIZATION:-0.88}
-      seqs=${OMNI_SAFE_MAX_NUM_SEQS:-2}
+      util=${OMNI_SAFE_GPU_MEMORY_UTILIZATION:-${OMNI_GPU_MEMORY_UTILIZATION:-0.80}}
+      seqs=${OMNI_SAFE_MAX_NUM_SEQS:-${OMNI_MAX_NUM_SEQS:-1}}
       eager=1
       ;;
     balanced)
-      util=${OMNI_GPU_MEMORY_UTILIZATION:-0.92}
-      seqs=${OMNI_MAX_NUM_SEQS:-4}
+      util=${OMNI_GPU_MEMORY_UTILIZATION:-0.85}
+      seqs=${OMNI_MAX_NUM_SEQS:-2}
       eager=0
       ;;
     fast)
-      util=${OMNI_FAST_GPU_MEMORY_UTILIZATION:-0.94}
-      seqs=${OMNI_FAST_MAX_NUM_SEQS:-8}
+      util=${OMNI_FAST_GPU_MEMORY_UTILIZATION:-${OMNI_GPU_MEMORY_UTILIZATION:-0.85}}
+      seqs=${OMNI_FAST_MAX_NUM_SEQS:-${OMNI_MAX_NUM_SEQS:-2}}
       eager=0
       ;;
     *) fail "OMNI_PROFILE必须是safe/balanced/fast，当前=$profile" ;;
@@ -89,10 +105,11 @@ start_server() {
 
   local -a cmd
   cmd=(
-    "$vllm_bin" serve "$OMNI_MODEL_PATH"
+    "$OMNI_PYTHON" -m vllm.entrypoints.cli.main
+    serve "$OMNI_MODEL_PATH"
     --served-model-name "$OMNI_SERVED_NAME"
     --host "$OMNI_HOST" --port "$OMNI_PORT"
-    --tensor-parallel-size 4
+    --tensor-parallel-size "$OMNI_TP_SIZE"
     --dtype auto
     --max-model-len "$OMNI_MAX_MODEL_LEN"
     --max-num-seqs "$seqs"
@@ -118,9 +135,9 @@ start_server() {
     printf '\n'
   } > "$CMD_FILE"
 
-  echo "[INFO] 启动一个Qwen3-Omni AWQ-No-TTS服务"
-  echo "[INFO] TP=4，每个请求由四张GPU共同计算，不启动三份权重"
-  echo "[INFO] profile=$profile max_num_seqs=$seqs gpu_memory_utilization=$util"
+  echo "[INFO] 启动一个Qwen3-Omni AWQ-No-TTS共享服务"
+  echo "[INFO] physical_gpus=$OMNI_VISIBLE_GPUS TP=$OMNI_TP_SIZE；一个权重副本，三个逻辑角色共享端点"
+  echo "[INFO] profile=$profile max_num_seqs=$seqs gpu_memory_utilization=$util max_model_len=$OMNI_MAX_MODEL_LEN"
   echo "[INFO] log=$LOG_FILE"
   echo "[CMD] $(cat "$CMD_FILE")"
 
@@ -143,13 +160,13 @@ start_server() {
   local rc=$?
   set -e
   if [[ $rc -ne 0 ]]; then
-    echo "[FAIL] 服务未就绪，最后120行日志：" >&2
-    tail -n 120 "$LOG_FILE" >&2 || true
-    if kill -0 "$pid" 2>/dev/null; then kill "$pid" 2>/dev/null || true; fi
+    echo "[FAIL] 服务未就绪，最后160行日志：" >&2
+    tail -n 160 "$LOG_FILE" >&2 || true
+    if kill -0 "$pid" 2>/dev/null; then kill -TERM -- "-$pid" 2>/dev/null || kill -TERM "$pid" 2>/dev/null || true; fi
     rm -f "$PID_FILE"
     exit 2
   fi
-  echo "[PASS] Omni TP4服务启动完成。"
+  echo "[PASS] Omni共享服务启动完成。"
 }
 
 stop_server() {
@@ -179,18 +196,20 @@ status_server() {
   echo "base_url=$OMNI_BASE_URL"
   echo "model=$OMNI_MODEL_PATH"
   echo "profile=$OMNI_PROFILE"
+  echo "physical_gpus=$OMNI_VISIBLE_GPUS"
   echo "tp_size=$OMNI_TP_SIZE"
   if is_running; then
     local pid
     pid=$(cat "$PID_FILE")
     echo "status=RUNNING pid=$pid"
-    ps -o pid,ppid,etime,%cpu,%mem,cmd -p "$pid" || true
+    ps -o user,pid,ppid,pgid,etime,%cpu,%mem,cmd -p "$pid" || true
     nvidia-smi --query-gpu=index,name,memory.used,memory.total,utilization.gpu,power.draw --format=csv,noheader || true
     "$OMNI_PYTHON" - "$OMNI_BASE_URL" <<'PY' || true
 import json,sys,urllib.request
 url=sys.argv[1].rstrip('/')+'/models'
 req=urllib.request.Request(url,headers={'Authorization':'Bearer EMPTY'})
-with urllib.request.urlopen(req,timeout=10) as r: print(json.dumps(json.loads(r.read()),ensure_ascii=False,indent=2))
+with urllib.request.urlopen(req,timeout=10) as r:
+    print(json.dumps(json.loads(r.read()),ensure_ascii=False,indent=2))
 PY
   else
     echo "status=STOPPED"

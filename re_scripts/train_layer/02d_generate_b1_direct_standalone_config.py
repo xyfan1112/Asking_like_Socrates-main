@@ -20,7 +20,7 @@ def method_block(training: dict) -> str:
         "do_train: true",
         "do_eval: true",
         "finetuning_type: lora",
-        "lora_target: all",
+        f"lora_target: {training.get('lora_target', 'all')}",
         f"lora_rank: {training['lora_rank']}",
         f"lora_alpha: {training['lora_alpha']}",
         f"lora_dropout: {training['lora_dropout']}",
@@ -102,7 +102,10 @@ trust_remote_code: true
     train_path = cfg_dir / "b1_direct_standalone_lora.yaml"
     export_path = cfg_dir / "b1_direct_standalone_export.yaml"
     train_path.write_text(train_yaml, encoding="utf-8")
-    export_path.write_text(export_yaml, encoding="utf-8")
+    if bool(training.get("adapter_only", False)):
+        export_path.unlink(missing_ok=True)
+    else:
+        export_path.write_text(export_yaml, encoding="utf-8")
     print("[B1 DIRECT CONFIG] PASS")
     print(" train =", train_path)
     print(" export =", export_path)

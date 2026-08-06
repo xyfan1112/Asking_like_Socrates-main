@@ -7,6 +7,7 @@ The all-class one-shot mode is retained only as a dense-output stress test.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -32,6 +33,10 @@ from common import (  # noqa: E402
 )
 from data_layer.qa_i18n import direct_detection_question  # noqa: E402
 from eval_common import chat_once, check_server, protocol, write_manifest  # noqa: E402
+
+
+def stable_shard(value: str, num_shards: int) -> int:
+    return int.from_bytes(hashlib.sha256(value.encode("utf-8")).digest()[:8], "big") % num_shards
 
 
 def coord_mode(name: str) -> str:
@@ -134,8 +139,12 @@ def main() -> None:
     ap.add_argument("--max-images", type=int, default=0)
     ap.add_argument("--output")
     ap.add_argument("--fresh", action="store_true", help="Delete this protocol's old result before inference.")
+    ap.add_argument("--num-shards", type=int, default=1)
+    ap.add_argument("--shard-index", type=int, default=0)
     args = ap.parse_args()
 
+    if args.num_shards < 1 or not 0 <= args.shard_index < args.num_shards:
+        raise SystemExit("invalid shard arguments")
     settings = load_settings(settings_from_cli(__file__, args.settings))
     model = settings["models"][args.model_key]
     cfg = protocol(settings, args.protocol)
@@ -211,6 +220,7 @@ def main() -> None:
                 all_gt,
                 [0.0, 0.0, float(width), float(height)],
             )]
+        tasks = [task for task in tasks if stable_shard(task[0], args.num_shards) == args.shard_index]
         expected += len(tasks) * k
 
         for query_id, requested_class, question, gt_objects, roi_pixel in tasks:
@@ -262,6 +272,8 @@ def main() -> None:
         "schema_version": "dota_detection_roi_v2",
         "canonical_gt_source": str(Path(settings["paths"]["dota128_ref_root"]) / f"{args.split}_all.jsonl"),
         "max_objects_per_roi": max_objects,
+        "num_shards": args.num_shards,
+        "shard_index": args.shard_index,
     }
     write_manifest(output.with_suffix(".manifest.json"), manifest)
     print(json.dumps(manifest, ensure_ascii=False, indent=2))

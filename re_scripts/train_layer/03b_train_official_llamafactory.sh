@@ -16,4 +16,4 @@ PY
 [[ -f "$CFG" ]] || { echo "[FAIL] config missing: $CFG" >&2; exit 2; }
 cd "$LLAMA_FACTORY_DIR"
 CUDA_VISIBLE_DEVICES="$CUDA_DEVICES" FORCE_TORCHRUN=1 NNODES=1 NPROC_PER_NODE="$WORLD_SIZE" \
-  "$LLAMAFACTORY_CLI" train "$CFG"
+  llamafactory_cli train "$CFG"

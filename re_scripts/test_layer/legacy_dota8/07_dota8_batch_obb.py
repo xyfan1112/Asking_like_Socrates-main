@@ -34,12 +34,12 @@ from transformers import AutoProcessor, Qwen2_5_VLForConditionalGeneration
 # 配置区：路径不同只修改这里
 # ============================================================
 
-DATASET_ROOT = Path("/home/yk/fxy/datasets/dota8")
-OUTPUT_ROOT = Path("/home/yk/fxy/dota8_vlm_obb_results")
+DATASET_ROOT = Path("/home/vieo/vieo/fxy_workspace/fxy/datasets/dota8")
+OUTPUT_ROOT = Path("/home/vieo/vieo/fxy_workspace/fxy/dota8_vlm_obb_results")
 
 MODELS = {
-    "Qwen": Path("/home/yk/fxy/models/Qwen2.5-VL-7B-Instruct"),
-    "RS": Path("/home/yk/fxy/models/RS-EoT-7B"),
+    "Qwen": Path("/home/vieo/vieo/fxy_workspace/fxy/models/Qwen2.5-VL-7B-Instruct"),
+    "RS": Path("/home/vieo/vieo/fxy_workspace/fxy/models/RS-EoT-7B"),
 }
 
 MODES = ("direct", "prompt")

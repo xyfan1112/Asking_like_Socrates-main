@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-ROOT="/home/yk/Asking_like_Socrates-main/re_scripts"
-PY="/home/yk/miniconda3/bin/python"
+ROOT="/home/vieo/vieo/fxy_workspace/Asking_like_Socrates-main/re_scripts"
+PY="/home/vieo/anaconda3/bin/python"
 
 CFG="${1:-$ROOT/settings.json}"
 
-DATA_DIR="/home/yk/fxy/datasets4.3.3/dota128-llamafactory4.3.3"
-RUN_DIR="/home/yk/fxy/results4.3.3/dota128_training4.3.3"
+DATA_DIR="/home/vieo/vieo/fxy_workspace/fxy/datasets4.3.3/dota128-llamafactory4.3.3"
+RUN_DIR="/home/vieo/vieo/fxy_workspace/fxy/results4.3.3/dota128_training4.3.3"
 
 STAMP="$(date +%Y%m%d_%H%M%S)"
 LOG_DIR="$RUN_DIR/logs"

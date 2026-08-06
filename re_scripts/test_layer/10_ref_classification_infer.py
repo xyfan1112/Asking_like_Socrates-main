@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -22,6 +23,10 @@ from common import (  # noqa: E402
 from eval_common import chat_once, check_server, protocol, write_manifest  # noqa: E402
 
 
+def stable_shard(value: str, num_shards: int) -> int:
+    return int.from_bytes(hashlib.sha256(value.encode("utf-8")).digest()[:8], "big") % num_shards
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--settings")
@@ -32,8 +37,12 @@ def main() -> None:
     ap.add_argument("--max-samples", type=int, default=0)
     ap.add_argument("--output")
     ap.add_argument("--fresh", action="store_true")
+    ap.add_argument("--num-shards", type=int, default=1)
+    ap.add_argument("--shard-index", type=int, default=0)
     args = ap.parse_args()
 
+    if args.num_shards < 1 or not 0 <= args.shard_index < args.num_shards:
+        raise SystemExit("invalid shard arguments")
     settings = load_settings(settings_from_cli(__file__, args.settings))
     model = settings["models"][args.model_key]
     cfg = protocol(settings, "ref_classification")
@@ -44,6 +53,7 @@ def main() -> None:
     )
     if args.max_samples:
         rows = rows[: args.max_samples]
+    rows = [row for row in rows if stable_shard(str(row["id"]), args.num_shards) == args.shard_index]
     output = (
         Path(args.output)
         if args.output
@@ -133,6 +143,8 @@ def main() -> None:
         "expected_runs": len(rows) * k,
         "output": str(output),
         "settings_protocol": cfg,
+        "num_shards": args.num_shards,
+        "shard_index": args.shard_index,
     }
     write_manifest(output.with_suffix(".manifest.json"), manifest)
     print(json.dumps(manifest, ensure_ascii=False, indent=2))
